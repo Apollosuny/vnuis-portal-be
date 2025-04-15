@@ -68,25 +68,4 @@ model Profile {
 
   // relations
   users User[]
-  todos Todo[]
-}
-
-enum TodoStatus {
-  TODO
-  IN_PROGRESS
-  DONE
-}
-
-model Todo {
-  id BigInt @id @default(autoincrement())
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  title       String
-  description String?
-  status      TodoStatus @default(TODO)
-
-  profileId BigInt
-  profile   Profile @relation(fields: [profileId], references: [id])
 }

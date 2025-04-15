@@ -92,15 +92,6 @@
       "compilerOptions": {
         "tsConfigPath": "libs/helper/tsconfig.lib.json"
       }
-    },
-    "todo": {
-      "type": "library",
-      "root": "libs/todo",
-      "entryFile": "index",
-      "sourceRoot": "libs/todo/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/todo/tsconfig.lib.json"
-      }
     }
   }
 }

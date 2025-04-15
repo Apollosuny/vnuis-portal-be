@@ -149,9 +149,7 @@
       "^@app/user(|/.*)$": "<rootDir>/libs/user/src/$1",
       "^@app/mailer(|/.*)$": "<rootDir>/libs/mailer/src/$1",
       "^@app/spec(|/.*)$": "<rootDir>/libs/spec/src/$1",
-      "^@app/helper(|/.*)$": "<rootDir>/libs/helper/src/$1",
-      "^@app/todo(|/.*)$": "<rootDir>/libs/todo/src/$1",
-      "^@app/post(|/.*)$": "<rootDir>/libs/post/src/$1"
+      "^@app/helper(|/.*)$": "<rootDir>/libs/helper/src/$1"
     }
   }
 }

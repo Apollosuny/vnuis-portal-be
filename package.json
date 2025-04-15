@@ -1,5 +1,5 @@
 {
-  "name": "nestjs-boilerplate",
+  "name": "virtuuni-nextus",
   "private": true,
   "scripts": {
     "build": "turbo build",
