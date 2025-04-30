@@ -19,20 +19,64 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/auth": ["libs/auth/src"],
-      "@app/auth/*": ["libs/auth/src/*"],
-      "@app/core": ["libs/core/src"],
-      "@app/core/*": ["libs/core/src/*"],
-      "@app/profile": ["libs/profile/src"],
-      "@app/profile/*": ["libs/profile/src/*"],
-      "@app/user": ["libs/user/src"],
-      "@app/user/*": ["libs/user/src/*"],
-      "@app/mailer": ["libs/mailer/src"],
-      "@app/mailer/*": ["libs/mailer/src/*"],
-      "@app/spec": ["libs/spec/src"],
-      "@app/spec/*": ["libs/spec/src/*"],
-      "@app/helper": ["libs/helper/src"],
-      "@app/helper/*": ["libs/helper/src/*"]
+      "@app/auth": [
+        "libs/auth/src",
+        "libs/auth/src"
+      ],
+      "@app/auth/*": [
+        "libs/auth/src/*",
+        "libs/auth/src/*"
+      ],
+      "@app/core": [
+        "libs/core/src"
+      ],
+      "@app/core/*": [
+        "libs/core/src/*"
+      ],
+      "@app/profile": [
+        "libs/profile/src"
+      ],
+      "@app/profile/*": [
+        "libs/profile/src/*"
+      ],
+      "@app/user": [
+        "libs/user/src",
+        "libs/user/src"
+      ],
+      "@app/user/*": [
+        "libs/user/src/*",
+        "libs/user/src/*"
+      ],
+      "@app/mailer": [
+        "libs/mailer/src"
+      ],
+      "@app/mailer/*": [
+        "libs/mailer/src/*"
+      ],
+      "@app/spec": [
+        "libs/spec/src"
+      ],
+      "@app/spec/*": [
+        "libs/spec/src/*"
+      ],
+      "@app/helper": [
+        "libs/helper/src"
+      ],
+      "@app/helper/*": [
+        "libs/helper/src/*"
+      ],
+      "@app/student": [
+        "libs/student/src"
+      ],
+      "@app/student/*": [
+        "libs/student/src/*"
+      ],
+      "@app/operator": [
+        "libs/operator/src"
+      ],
+      "@app/operator/*": [
+        "libs/operator/src/*"
+      ]
     }
   }
 }

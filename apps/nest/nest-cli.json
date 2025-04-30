@@ -65,6 +65,42 @@
       "compilerOptions": {
         "tsConfigPath": "libs/helper/tsconfig.lib.json"
       }
+    },
+    "auth": {
+      "type": "library",
+      "root": "libs/auth",
+      "entryFile": "index",
+      "sourceRoot": "libs/auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/auth/tsconfig.lib.json"
+      }
+    },
+    "user": {
+      "type": "library",
+      "root": "libs/user",
+      "entryFile": "index",
+      "sourceRoot": "libs/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/user/tsconfig.lib.json"
+      }
+    },
+    "student": {
+      "type": "library",
+      "root": "libs/student",
+      "entryFile": "index",
+      "sourceRoot": "libs/student/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/student/tsconfig.lib.json"
+      }
+    },
+    "operator": {
+      "type": "library",
+      "root": "libs/operator",
+      "entryFile": "index",
+      "sourceRoot": "libs/operator/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/operator/tsconfig.lib.json"
+      }
     }
   }
 }

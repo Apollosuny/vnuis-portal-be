@@ -1,16 +1,12 @@
 import { Hash } from '../libs/helper/src/hash.helper'
 import { PrismaClient } from '@prisma/client'
-
 const prisma = new PrismaClient()
 async function main() {
   console.log('PRISMA DATABASE SEEDING...')
   if (process.env.SUPER_ADMIN_USERNAME && process.env.SUPER_ADMIN_PASSWORD) {
     const admin = await prisma.user.findUnique({
       where: {
-        username_provider: {
-          username: process.env.SUPER_ADMIN_USERNAME,
-          provider: 'LOCAL',
-        },
+        username: process.env.SUPER_ADMIN_USERNAME,
       },
     })
     if (admin) {
@@ -21,12 +17,12 @@ async function main() {
       data: {
         username: process.env.SUPER_ADMIN_USERNAME,
         password: Hash.make(process.env.SUPER_ADMIN_PASSWORD),
-        provider: 'LOCAL',
         role: 'SUPERADMIN',
-        confirmed: true,
-        profile: {
+        operator: {
           create: {
-            name: 'Super Admin',
+            firstName: 'Super',
+            lastName: 'Admin',
+            email: process.env.SUPER_ADMIN_USERNAME,
           },
         },
       },

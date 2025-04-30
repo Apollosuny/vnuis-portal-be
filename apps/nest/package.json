@@ -15,11 +15,13 @@
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "local": "--------------------------------",
-    "start:local": "dotenv -e .env.local -- nest start",
-    "start:local:watch": "dotenv -e .env.local -- nest start --watch",
-    "start:local:debug": "dotenv -e .env.local -- nest start --debug --watch",
+    "start:local": "dotenv -e .env -- nest start",
+    "start:local:watch": "dotenv -e .env -- nest start --watch",
+    "start:local:debug": "dotenv -e .env -- nest start --debug --watch",
     "start:local:lambda": "dotenv -e .env.dev -- yarn build:layer && dotenv -e .env.dev -- nest start api --webpackPath webpack-lambda.config.js",
-    "prisma:reset:local": "dotenv -e .env.local -- npx prisma migrate reset --force && dotenv -e .env.local -- npx prisma db seed",
+    "prisma:reset:local": "dotenv -e .env -- npx prisma migrate reset --force && dotenv -e .env -- npx prisma db seed",
+    "prisma:gen:local": "dotenv -e .env -- npx prisma generate",
+    "prisma:dev:local": "dotenv -e .env -- npx prisma migrate dev",
     "spec": "--------------------------------",
     "prisma:reset:spec": "dotenv -e .env.spec -- npx prisma migrate reset --force && dotenv -e .env.spec -- npx prisma db seed",
     "prisma:dev:spec": "dotenv -e .env.spec -- npx prisma migrate dev",
@@ -146,7 +148,11 @@
       "^@app/core(|/.*)$": "<rootDir>/libs/core/src/$1",
       "^@app/mailer(|/.*)$": "<rootDir>/libs/mailer/src/$1",
       "^@app/spec(|/.*)$": "<rootDir>/libs/spec/src/$1",
-      "^@app/helper(|/.*)$": "<rootDir>/libs/helper/src/$1"
+      "^@app/helper(|/.*)$": "<rootDir>/libs/helper/src/$1",
+      "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
+      "^@app/user(|/.*)$": "<rootDir>/libs/user/src/$1",
+      "^@app/student(|/.*)$": "<rootDir>/libs/student/src/$1",
+      "^@app/operator(|/.*)$": "<rootDir>/libs/operator/src/$1"
     }
   }
 }
