@@ -1,2 +1,2 @@
-export * from './operator.module';
-export * from './operator.service';
+export * from './operator.module'
+export * from './operator.service'

@@ -58,6 +58,9 @@ CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 CREATE UNIQUE INDEX "Student_userId_key" ON "Student"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Student_studentId_email_key" ON "Student"("studentId", "email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Operator_userId_key" ON "Operator"("userId");
 
 -- AddForeignKey
