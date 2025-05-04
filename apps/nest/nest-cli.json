@@ -101,6 +101,42 @@
       "compilerOptions": {
         "tsConfigPath": "libs/operator/tsconfig.lib.json"
       }
+    },
+    "room": {
+      "type": "library",
+      "root": "libs/room",
+      "entryFile": "index",
+      "sourceRoot": "libs/room/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/room/tsconfig.lib.json"
+      }
+    },
+    "room-time-slot": {
+      "type": "library",
+      "root": "libs/room-time-slot",
+      "entryFile": "index",
+      "sourceRoot": "libs/room-time-slot/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/room-time-slot/tsconfig.lib.json"
+      }
+    },
+    "recurring-pattern": {
+      "type": "library",
+      "root": "libs/recurring-pattern",
+      "entryFile": "index",
+      "sourceRoot": "libs/recurring-pattern/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/recurring-pattern/tsconfig.lib.json"
+      }
+    },
+    "room-booking": {
+      "type": "library",
+      "root": "libs/room-booking",
+      "entryFile": "index",
+      "sourceRoot": "libs/room-booking/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/room-booking/tsconfig.lib.json"
+      }
     }
   }
 }

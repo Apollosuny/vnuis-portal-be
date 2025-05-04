@@ -56,8 +56,9 @@ model Student {
   address    String?
 
   // Relations
-  userId String @unique @db.Uuid
-  user   User   @relation(fields: [userId], references: [id])
+  userId   String        @unique @db.Uuid
+  user     User          @relation(fields: [userId], references: [id])
+  bookings RoomBooking[]
 }
 
 model Operator {
@@ -75,4 +76,112 @@ model Operator {
   // Relations
   userId String @unique @db.Uuid
   user   User   @relation(fields: [userId], references: [id])
+
+  bookings RoomBooking[]
+}
+
+model Room {
+  roomId      String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  capacity    Int
+  location    String
+  type        RoomType
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  timeSlots RoomTimeSlot[]
+  bookings  RoomBooking[]
+
+  @@index([roomId])
+}
+
+enum RoomType {
+  CLASSROOM
+  LAB
+  EVENT
+}
+
+model RoomTimeSlot {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  startTime DateTime
+  endTime   DateTime
+  dowsBit   Int
+
+  // Relations
+  roomId String @db.Uuid
+  room   Room   @relation(fields: [roomId], references: [roomId])
+}
+
+model RoomBooking {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  startTime DateTime
+  endTime   DateTime
+  duration  Int
+  purpose   String
+
+  handleAt DateTime?
+  remarks  String?
+
+  attendees Int?
+
+  isRecurring Boolean @default(false)
+
+  status RoomBookingStatus @default(PENDING)
+
+  // Relations
+  roomId String @db.Uuid
+  room   Room   @relation(fields: [roomId], references: [roomId])
+
+  studentId String  @db.Uuid
+  student   Student @relation(fields: [studentId], references: [id])
+
+  handleByOperatorId String?   @db.Uuid
+  handleBy           Operator? @relation(fields: [handleByOperatorId], references: [id])
+
+  recurringPattern RecurringPattern?
+
+  @@index([roomId, startTime, endTime])
+}
+
+enum RoomBookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+model RecurringPattern {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  startDate DateTime
+  endDate   DateTime
+  frequency Frequency
+  interval  Int
+  dowsBit   Int
+
+  // Relations
+  bookingId String      @unique @db.Uuid
+  booking   RoomBooking @relation(fields: [bookingId], references: [id])
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
 }

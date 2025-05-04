@@ -76,6 +76,36 @@
       ],
       "@app/operator/*": [
         "libs/operator/src/*"
+      ],
+      "@app/room": [
+        "libs/room/src"
+      ],
+      "@app/room/*": [
+        "libs/room/src/*"
+      ],
+      "@app/room-timeslot": [
+        "libs/room-timeslot/src"
+      ],
+      "@app/room-timeslot/*": [
+        "libs/room-timeslot/src/*"
+      ],
+      "@app/room-time-slot": [
+        "libs/room-time-slot/src"
+      ],
+      "@app/room-time-slot/*": [
+        "libs/room-time-slot/src/*"
+      ],
+      "@app/recurring-pattern": [
+        "libs/recurring-pattern/src"
+      ],
+      "@app/recurring-pattern/*": [
+        "libs/recurring-pattern/src/*"
+      ],
+      "@app/room-booking": [
+        "libs/room-booking/src"
+      ],
+      "@app/room-booking/*": [
+        "libs/room-booking/src/*"
       ]
     }
   }

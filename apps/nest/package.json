@@ -152,7 +152,11 @@
       "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
       "^@app/user(|/.*)$": "<rootDir>/libs/user/src/$1",
       "^@app/student(|/.*)$": "<rootDir>/libs/student/src/$1",
-      "^@app/operator(|/.*)$": "<rootDir>/libs/operator/src/$1"
+      "^@app/operator(|/.*)$": "<rootDir>/libs/operator/src/$1",
+      "^@app/room(|/.*)$": "<rootDir>/libs/room/src/$1",
+      "^@app/room-time-slot(|/.*)$": "<rootDir>/libs/room-time-slot/src/$1",
+      "^@app/recurring-pattern(|/.*)$": "<rootDir>/libs/recurring-pattern/src/$1",
+      "^@app/room-booking(|/.*)$": "<rootDir>/libs/room-booking/src/$1"
     }
   }
 }
