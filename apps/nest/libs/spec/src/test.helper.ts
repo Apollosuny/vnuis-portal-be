@@ -1,7 +1,5 @@
 import { AuthModule } from '@app/auth'
-import { TokenResDto } from '@app/auth/dtos/token.res.dto'
 import { setupNestApp } from '@app/core/setup-nest-app'
-import { ProfileModule } from '@app/profile'
 import { UserModule } from '@app/user'
 import { UserEntity } from '@app/user/entities/user.entity'
 import { INestApplication, HttpStatus, ModuleMetadata } from '@nestjs/common'
@@ -11,6 +9,9 @@ import { randomUUID } from 'crypto'
 import { PrismaService } from 'nestjs-prisma'
 import request from 'supertest'
 import { CoreModule } from '@app/core/core.module'
+import { TokenResDto } from '@app/auth/dtos/token-res.dto'
+import { StudentModule } from '@app/student'
+import { OperatorModule } from '@app/operator'
 
 function buildExpectStatus(res: request.Response, expectedStatus: HttpStatus) {
   return {
@@ -67,11 +68,37 @@ export interface IAccountGenerator {
   autoConfirm?: boolean
 }
 
+export interface IStudentAccountGenerator {
+  initProfile?: boolean
+  username?: string
+  password?: string
+  role?: Role
+}
+
+export interface IOperatorAccountGenerator {
+  initProfile?: boolean
+  username?: string
+  password?: string
+  role?: Role
+}
+
 const defaultAccGen: () => IAccountGenerator = () => ({
   initProfile: true,
   autoConfirm: true,
-  role: 'USER',
+  role: 'STUDENT',
 })
+
+const defaultStudentAccGen: () => IStudentAccountGenerator = () => ({
+  initProfile: true,
+  role: 'STUDENT',
+})
+
+const defaultOperatorAccGen: () => IOperatorAccountGenerator = () => ({
+  initProfile: true,
+  role: 'ADMIN',
+})
+
+// TODO: update this to use the new profile module
 
 export class TestContext {
   prisma: PrismaService
@@ -118,36 +145,7 @@ export class TestContext {
       request(callback: (st: request.Agent) => request.Test) {
         return callback(requestFunc()).set('Authorization', `Bearer ${jwt}`)
       },
-      promoteAdmin: (userId: bigint) => this.promoteAdmin(userId),
     }
-  }
-
-  async promoteAdmin(userId: bigint) {
-    await this.requestSuperAdmin((r) => r.patch(`/user/promote-admin/${userId}`)).send()
-  }
-
-  async generateAcount(options: IAccountGenerator = defaultAccGen()) {
-    options = {
-      ...defaultAccGen(),
-      ...options,
-    }
-    const username = options.username || randomUUID() + '@mail.com'
-    const password = options.password || randomUUID()
-    let res = await this.request().post('/auth/local/register').send({ username, password }).expect(HttpStatus.CREATED)
-
-    if (options.autoConfirm) {
-      await this.prisma.user.update({
-        where: { id: res.body.user.id },
-        data: { confirmed: true, verifyCode: null },
-      })
-    }
-    let userContext = this.buildUserContext(res.body)
-    if (options.initProfile) {
-      res = await userContext.request((t) => t.post('/auth/init-profile')).expect(HttpStatus.CREATED)
-    }
-    this._createdUsers.push(res.body.user)
-    userContext = this.buildUserContext({ ...res.body, user: res.body.user })
-    return userContext
   }
 
   async clean(options = { cleanUsers: true }) {
@@ -164,7 +162,7 @@ const createContext = async (meta: ModuleMetadata = {}) => {
   let app: INestApplication
   try {
     moduleFixture = await Test.createTestingModule({
-      imports: [CoreModule, AuthModule, UserModule, ProfileModule, ...(meta.imports || [])],
+      imports: [CoreModule, AuthModule, UserModule, StudentModule, OperatorModule, ...(meta.imports || [])],
       controllers: [...(meta.controllers || [])],
       providers: [...(meta.providers || [])],
     }).compile()
