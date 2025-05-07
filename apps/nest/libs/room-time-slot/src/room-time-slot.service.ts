@@ -7,10 +7,21 @@ import { pushDowsBitBackward, pushDowsBitForward } from './utils/manipulate-dows
 import { CreateTimeSlotDto, CreateTimeSlotResponseDto } from './dtos/create-time-slot.dto'
 import { th } from '@app/helper'
 import { RoomTimeSlotEntity } from './entities/room-time-slot.entity'
+import { decodeDowsBit } from './utils/decode-dows-bit'
+import { circularShiftLeft, circularShiftRight } from './utils/circular-shift'
 
 @Injectable()
 export class RoomTimeSlotService {
   constructor(private readonly _prisma: PrismaService) {}
+
+  async findAvailableTimeSlots(roomId: string) {
+    const timeSlots = await this._prisma.roomTimeSlot.findMany({
+      where: {
+        roomId,
+      },
+    })
+    return th.toInstancesSafe(RoomTimeSlotEntity, timeSlots)
+  }
 
   async create(dto: CreateTimeSlotDto) {
     try {
@@ -82,6 +93,66 @@ export class RoomTimeSlotService {
       startTime,
       endTime,
       dowsBit,
+    }
+  }
+
+  deserializeTimeSlotRecord(record: RoomTimeSlotEntity, now: DateTime, offset?: number) {
+    now = now.toUTC()
+
+    // Parse start and end times
+    const startHours = DateTime.fromJSDate(record.startTime).toUTC().hour
+    const startMinutes = DateTime.fromJSDate(record.startTime).toUTC().minute
+    const endHours = DateTime.fromJSDate(record.endTime).toUTC().hour
+    const endMinutes = DateTime.fromJSDate(record.endTime).toUTC().minute
+
+    // Create DateTime
+    // Create DateTime objects for start and end times
+    const startTime = now.set({ hour: startHours, minute: startMinutes })
+    const endTime = now.set({ hour: endHours, minute: endMinutes })
+
+    // Decode the days of week from the bit representation
+    const bitPrimitive = record.dowsBit
+    const dowsUtc = uniq([...decodeDowsBit(bitPrimitive)])
+
+    const startHour = startTime.toFormat('HH:mm')
+    const endHour = endTime.toFormat('HH:mm')
+
+    // Initialize offset values
+    let dowsOffset = dowsUtc
+    let startHourOffset = startHour
+    let endHourOffset = endHour
+
+    // Adjust for time offset if provided
+    if (offset !== 0) {
+      const timeOffset = startTime.plus({ minutes: offset })
+      const offsetStartOfDay = timeOffset.startOf('day')
+      const utcStartOfDay = startTime.startOf('day')
+
+      // Adjust the days of week bit if the offset crosses a day boundary
+      let bits = bitPrimitive
+      if (offsetStartOfDay > utcStartOfDay) {
+        bits = circularShiftLeft(bits, 1)
+      } else if (offsetStartOfDay < utcStartOfDay) {
+        bits = circularShiftRight(bits, 1)
+      }
+      dowsOffset = decodeDowsBit(bits)
+
+      // Adjust start and end times for the offset
+      startHourOffset = timeOffset.toFormat('HH:mm')
+      endHourOffset = endTime.plus({ minutes: offset }).toFormat('HH:mm')
+    }
+
+    // Return the deserialized and adjusted booking time record
+    return {
+      id: record.id,
+      startTime: startTime.set({ second: 0, millisecond: 0 }),
+      endTime: endTime.set({ second: 0, millisecond: 0 }),
+      startHour: startHour,
+      endHour: endHour,
+      dowsUtc: dowsUtc,
+      dowsOffset: dowsOffset,
+      startHourOffset,
+      endHourOffset,
     }
   }
 }
