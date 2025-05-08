@@ -12,6 +12,7 @@ import { CoreModule } from '@app/core/core.module'
 import { TokenResDto } from '@app/auth/dtos/token-res.dto'
 import { StudentModule } from '@app/student'
 import { OperatorModule } from '@app/operator'
+import { Hash } from '@app/helper'
 
 function buildExpectStatus(res: request.Response, expectedStatus: HttpStatus) {
   return {
@@ -60,45 +61,92 @@ declare global {
   }
 }
 
-export interface IAccountGenerator {
-  initProfile?: boolean
+export interface IUserGenerator {
   username?: string
   password?: string
   role?: Role
-  autoConfirm?: boolean
+  blocked?: boolean
 }
 
-export interface IStudentAccountGenerator {
-  initProfile?: boolean
-  username?: string
-  password?: string
-  role?: Role
+export interface IStudentGenerator {
+  studentId?: string
+  firstName?: string
+  lastName?: string
+  avatarUrl?: string
+  dob?: Date
+  enrollYear?: number
+  major?: string
+  email?: string
+  phone?: string
+  address?: string
 }
 
-export interface IOperatorAccountGenerator {
-  initProfile?: boolean
-  username?: string
-  password?: string
-  role?: Role
+export interface IOperatorGenerator {
+  firstName?: string
+  lastName?: string
+  avatarUrl?: string
+  email?: string
+  phone?: string
 }
 
-const defaultAccGen: () => IAccountGenerator = () => ({
-  initProfile: true,
-  autoConfirm: true,
+// Helper functions to generate random data
+const randomString = (prefix: string) => `${prefix}-${randomUUID().slice(0, 8)}`
+const randomFirstName = () => {
+  const names = ['John', 'Jane', 'Alice', 'Bob', 'Charlie', 'Diana', 'Edward', 'Fiona', 'George', 'Helen']
+  return names[Math.floor(Math.random() * names.length)]
+}
+const randomLastName = () => {
+  const names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Miller', 'Davis', 'Garcia', 'Wilson', 'Taylor']
+  return names[Math.floor(Math.random() * names.length)]
+}
+const randomMajor = () => {
+  const majors = [
+    'Computer Science',
+    'Engineering',
+    'Business',
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Arts',
+    'Economics',
+    'Psychology',
+  ]
+  return majors[Math.floor(Math.random() * majors.length)]
+}
+const randomPhone = () => `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`
+const randomAddress = () =>
+  `${Math.floor(100 + Math.random() * 900)} ${randomString('Street')} St, ${randomString('City')}, ${randomString('State')} ${Math.floor(10000 + Math.random() * 90000)}`
+
+const defaultUserGen: () => IUserGenerator = () => ({
+  username: randomString('user'),
+  password: 'Password123!',
   role: 'STUDENT',
+  blocked: false,
 })
 
-const defaultStudentAccGen: () => IStudentAccountGenerator = () => ({
-  initProfile: true,
-  role: 'STUDENT',
+const defaultStudentGen: () => IStudentGenerator = () => ({
+  studentId: `ST${Math.floor(100000 + Math.random() * 900000)}`,
+  firstName: randomFirstName(),
+  lastName: randomLastName(),
+  dob: new Date(
+    1990 + Math.floor(Math.random() * 15),
+    Math.floor(Math.random() * 12),
+    Math.floor(Math.random() * 28) + 1,
+  ),
+  enrollYear: 2020 + Math.floor(Math.random() * 5),
+  major: randomMajor(),
+  email: `${randomString('student')}@example.com`,
+  phone: randomPhone(),
+  address: randomAddress(),
 })
 
-const defaultOperatorAccGen: () => IOperatorAccountGenerator = () => ({
-  initProfile: true,
-  role: 'ADMIN',
+const defaultOperatorGen: () => IOperatorGenerator = () => ({
+  firstName: randomFirstName(),
+  lastName: randomLastName(),
+  email: `${randomString('operator')}@example.com`,
+  phone: randomPhone(),
 })
-
-// TODO: update this to use the new profile module
 
 export class TestContext {
   prisma: PrismaService
@@ -131,7 +179,83 @@ export class TestContext {
     return callback(this.request()).set('Authorization', `Bearer ${this.superAdmin.jwt}`)
   }
 
-  buildUserContext(userInfo: Partial<Omit<TokenResDto, 'profile'>>) {
+  async createUser(userGen: IUserGenerator = defaultUserGen()) {
+    const hash = Hash.make(userGen.password)
+
+    const user = await this.prisma.user.create({
+      data: {
+        username: userGen.username,
+        password: hash,
+        role: userGen.role,
+        blocked: userGen.blocked,
+      },
+    })
+    this._createdUsers.push(user as UserEntity)
+    return user
+  }
+
+  async createStudentUser(
+    userGen: IUserGenerator = defaultUserGen(),
+    studentGen: IStudentGenerator = defaultStudentGen(),
+  ) {
+    const user = await this.createUser({ ...userGen, role: 'STUDENT' })
+
+    const student = await this.prisma.student.create({
+      data: {
+        userId: user.id,
+        studentId: studentGen.studentId,
+        firstName: studentGen.firstName,
+        lastName: studentGen.lastName,
+        avatarUrl: studentGen.avatarUrl,
+        dob: studentGen.dob,
+        enrollYear: studentGen.enrollYear,
+        major: studentGen.major,
+        email: studentGen.email,
+        phone: studentGen.phone,
+        address: studentGen.address,
+      },
+      include: {
+        user: true,
+      },
+    })
+
+    return { user, student }
+  }
+
+  async createOperatorUser(
+    userGen: IUserGenerator = defaultUserGen(),
+    operatorGen: IOperatorGenerator = defaultOperatorGen(),
+  ) {
+    const user = await this.createUser({ ...userGen, role: 'ADMIN' })
+
+    const operator = await this.prisma.operator.create({
+      data: {
+        userId: user.id,
+        firstName: operatorGen.firstName,
+        lastName: operatorGen.lastName,
+        avatarUrl: operatorGen.avatarUrl,
+        email: operatorGen.email,
+        phone: operatorGen.phone,
+      },
+      include: {
+        user: true,
+      },
+    })
+
+    return { user, operator }
+  }
+
+  async loginUser(username: string, password: string) {
+    const res = await this.request().post('/auth/local').send({ username, password })
+
+    if (res.statusCode !== HttpStatus.OK) {
+      throw new Error(`Failed to login user ${username}: ${JSON.stringify(res.body)}`)
+    }
+
+    return res.body as TokenResDto
+  }
+
+  buildUserContext(userInfo: Partial<TokenResDto>) {
     const requestFunc = this.request.bind(this)
     let jwt = userInfo.jwt
 
@@ -148,10 +272,62 @@ export class TestContext {
     }
   }
 
+  async createStudentContext(
+    userGen: IUserGenerator = defaultUserGen(),
+    studentGen: IStudentGenerator = defaultStudentGen(),
+  ) {
+    const { user, student } = await this.createStudentUser(userGen, studentGen)
+    const tokenInfo = await this.loginUser(user.username, userGen.password)
+    return {
+      user,
+      student,
+      tokenInfo,
+      context: this.buildUserContext(tokenInfo),
+    }
+  }
+
+  async createOperatorContext(
+    userGen: IUserGenerator = defaultUserGen(),
+    operatorGen: IOperatorGenerator = defaultOperatorGen(),
+  ) {
+    const { user, operator } = await this.createOperatorUser(userGen, operatorGen)
+    const tokenInfo = await this.loginUser(user.username, userGen.password)
+    return {
+      user,
+      operator,
+      tokenInfo,
+      context: this.buildUserContext(tokenInfo),
+    }
+  }
+
   async clean(options = { cleanUsers: true }) {
     if (options.cleanUsers) {
-      await this.prisma.user.deleteMany({ where: { id: { in: this._createdUsers.map((u) => u.id) } } })
+      await this.prisma.student.deleteMany({
+        where: {
+          userId: {
+            in: this._createdUsers.map((u) => u.id),
+          },
+        },
+      })
+
+      await this.prisma.operator.deleteMany({
+        where: {
+          userId: {
+            in: this._createdUsers.map((u) => u.id),
+          },
+        },
+      })
+
+      // Then clean users
+      await this.prisma.user.deleteMany({
+        where: {
+          id: {
+            in: this._createdUsers.map((u) => u.id),
+          },
+        },
+      })
     }
+
     await this.app.close()
     await this._testModule.close()
   }

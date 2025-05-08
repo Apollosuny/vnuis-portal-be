@@ -32,14 +32,14 @@ export class AuthService {
         { ...payload },
         {
           secret: process.env.JWT_SECRET,
-          expiresIn: process.env.JWT_EXPIRES_IN,
+          expiresIn: process.env.JWT_EXPIRES,
         },
       ),
       jwtRefresh: this._jwtService.sign(
         { ...payload },
         {
           secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+          expiresIn: process.env.JWT_REFRESH_EXPIRES,
         },
       ),
       user: th.toInstanceSafe(UserEntity, user),
