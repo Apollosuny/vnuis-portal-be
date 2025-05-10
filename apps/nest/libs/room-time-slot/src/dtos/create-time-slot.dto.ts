@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { Expose } from 'class-transformer'
+import { Expose, Type } from 'class-transformer'
 import { IsArray, IsBoolean, IsNotEmpty } from 'class-validator'
 import { TimeSlotRangeDto } from './time-slot-range.dto'
 
@@ -7,7 +7,8 @@ export class CreateTimeSlotDto {
   @IsArray()
   @IsNotEmpty()
   @Expose()
-  @ApiProperty()
+  @Type(() => TimeSlotRangeDto)
+  @ApiProperty({ type: [TimeSlotRangeDto] })
   timeRange: TimeSlotRangeDto[]
 
   @IsNotEmpty()
@@ -24,6 +25,7 @@ export class CreateTimeSlotResponseDto {
 
   @IsArray()
   @Expose()
-  @ApiProperty()
+  @Type(() => TimeSlotRangeDto)
+  @ApiProperty({ type: [TimeSlotRangeDto] })
   timeSlots: TimeSlotRangeDto[]
 }

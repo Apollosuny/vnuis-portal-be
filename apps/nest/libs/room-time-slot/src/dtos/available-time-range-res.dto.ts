@@ -1,16 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { Expose } from 'class-transformer'
 
-export class TimeSlotRangeDto {
+export class AvailableTimeRangeResDto {
   @Expose()
   @ApiProperty()
-  startTime: string
+  startHour: string
 
   @Expose()
   @ApiProperty()
-  endTime: string
-
-  @Expose()
-  @ApiProperty()
-  dows: string[]
+  endHour: string
 }

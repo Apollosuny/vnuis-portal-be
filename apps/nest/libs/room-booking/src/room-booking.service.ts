@@ -1,5 +1,5 @@
 import { UserEntity } from '@app/user/entities/user.entity'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Inject, forwardRef } from '@nestjs/common'
 import { PrismaService } from 'nestjs-prisma'
 import { CreateRoomBookingDto } from './dtos/create-room-booking.dto'
 import { RoomService } from '@app/room'
@@ -22,6 +22,7 @@ export class RoomBookingService {
   constructor(
     private readonly _prisma: PrismaService,
     private readonly _roomService: RoomService,
+    @Inject(forwardRef(() => RoomTimeSlotService))
     private readonly _roomTimeSlotService: RoomTimeSlotService,
   ) {}
 
@@ -147,11 +148,11 @@ export class RoomBookingService {
     return freeRanges
   }
 
-  async getOverlapRoomBookings(from: DateTime, to: DateTime, roomId: string, status: RoomBookingStatus) {
+  async getOverlapRoomBookings(from: DateTime, to: DateTime, roomId: string, status?: RoomBookingStatus) {
     return await this._prisma.roomBooking.findMany({
       where: {
         roomId,
-        status,
+        ...(status ? { status } : {}),
         AND: [
           {
             startTime: {

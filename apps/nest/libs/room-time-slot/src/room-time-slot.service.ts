@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Inject, forwardRef } from '@nestjs/common'
 import { uniq } from 'lodash'
 import { DateTime } from 'luxon'
 import { PrismaService } from 'nestjs-prisma'
@@ -9,10 +9,16 @@ import { th } from '@app/helper'
 import { RoomTimeSlotEntity } from './entities/room-time-slot.entity'
 import { decodeDowsBit } from './utils/decode-dows-bit'
 import { circularShiftLeft, circularShiftRight } from './utils/circular-shift'
+import { RoomBookingService } from '@app/room-booking'
+import { AvailableTimeRangeResDto } from './dtos/available-time-range-res.dto'
 
 @Injectable()
 export class RoomTimeSlotService {
-  constructor(private readonly _prisma: PrismaService) {}
+  constructor(
+    private readonly _prisma: PrismaService,
+    @Inject(forwardRef(() => RoomBookingService))
+    private readonly _roomBookingService: RoomBookingService,
+  ) {}
 
   async findAvailableTimeSlots(roomId: string) {
     const timeSlots = await this._prisma.roomTimeSlot.findMany({
@@ -23,6 +29,16 @@ export class RoomTimeSlotService {
     return th.toInstancesSafe(RoomTimeSlotEntity, timeSlots)
   }
 
+  async getAvailableTimeByDate(roomId: string, datePrimitiveString: string, offsetPrimitive: string) {
+    const freeRanges = await this._roomBookingService.getRoomAvailableTimeSlots(
+      datePrimitiveString,
+      roomId,
+      offsetPrimitive,
+    )
+
+    return th.toInstancesSafe(AvailableTimeRangeResDto, freeRanges)
+  }
+
   async create(dto: CreateTimeSlotDto) {
     try {
       const { timeRange, roomId } = dto
@@ -30,8 +46,8 @@ export class RoomTimeSlotService {
       const timeSlotData = timeRange.map((timeSlot) => {
         const { startTime: startTimePrimitive, endTime: endTimePrimitive, dows: dowsPrimitive } = timeSlot
 
-        const startDatePrimitive = DateTime.fromJSDate(startTimePrimitive)
-        const endDatePrimitive = DateTime.fromJSDate(endTimePrimitive)
+        const startDatePrimitive = DateTime.fromISO(startTimePrimitive)
+        const endDatePrimitive = DateTime.fromISO(endTimePrimitive)
 
         // Convert start and end times to UTC
         const { startTime, endTime, dowsBit } = this.calculateUtcTimeData(
@@ -49,7 +65,11 @@ export class RoomTimeSlotService {
       })
 
       await this._prisma.roomTimeSlot.createMany({
-        data: timeSlotData,
+        data: timeSlotData.map((slot) => ({
+          ...slot,
+          startTime: DateTime.fromFormat(slot.startTime, 'HH:mm').toISO(),
+          endTime: DateTime.fromFormat(slot.endTime, 'HH:mm').toISO(),
+        })),
       })
 
       return th.toInstanceSafe(CreateTimeSlotResponseDto, {
@@ -57,7 +77,7 @@ export class RoomTimeSlotService {
         timeSlots: timeSlotData.map((slot) => ({
           startTime: DateTime.fromFormat(slot.startTime, 'HH:mm').toJSDate(),
           endTime: DateTime.fromFormat(slot.endTime, 'HH:mm').toJSDate(),
-          dows: slot.dowsBit,
+          dows: decodeDowsBit(slot.dowsBit),
         })),
       })
     } catch (error) {
