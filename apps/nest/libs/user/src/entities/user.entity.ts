@@ -39,4 +39,14 @@ export class UserEntity implements User {
   @Expose()
   @ApiProperty()
   role: Role
+
+  @Type(() => StudentEntity)
+  @Expose()
+  @ApiPropertyOptional({ type: () => StudentEntity })
+  student?: StudentEntity
+
+  @Type(() => OperatorEntity)
+  @Expose()
+  @ApiPropertyOptional({ type: () => OperatorEntity })
+  operator?: OperatorEntity
 }

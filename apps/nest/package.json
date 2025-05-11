@@ -156,7 +156,9 @@
       "^@app/room(|/.*)$": "<rootDir>/libs/room/src/$1",
       "^@app/room-time-slot(|/.*)$": "<rootDir>/libs/room-time-slot/src/$1",
       "^@app/recurring-pattern(|/.*)$": "<rootDir>/libs/recurring-pattern/src/$1",
-      "^@app/room-booking(|/.*)$": "<rootDir>/libs/room-booking/src/$1"
+      "^@app/room-booking(|/.*)$": "<rootDir>/libs/room-booking/src/$1",
+      "^@app/administrative-procedures-form(|/.*)$": "<rootDir>/libs/administrative-procedures-form/src/$1",
+      "^@app/administrative-procedures-form-submission(|/.*)$": "<rootDir>/libs/administrative-procedures-form-submission/src/$1"
     }
   }
 }

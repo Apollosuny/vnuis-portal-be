@@ -24,7 +24,13 @@ export class UserService {
   }
 
   async findOne(id: string, options = { advantage: false }): Promise<UserEntity | undefined> {
-    const user = await this._prisma.user.findUnique({ where: { id } })
+    const user = await this._prisma.user.findUnique({
+      where: { id },
+      include: {
+        student: true,
+        operator: true,
+      },
+    })
     if (user) {
       if (options.advantage) {
         return th.toInstanceUnsafe(UserEntity, user)

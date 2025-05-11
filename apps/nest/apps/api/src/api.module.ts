@@ -8,6 +8,8 @@ import { RoomModule } from '@app/room'
 import { RoomBookingModule } from '@app/room-booking'
 import { RoomTimeSlotModule } from '@app/room-time-slot'
 import { RecurringPatternModule } from '@app/recurring-pattern'
+import { AdministrativeProceduresFormModule } from '@app/administrative-procedures-form'
+import { AdministrativeProceduresFormSubmissionModule } from '@app/administrative-procedures-form-submission'
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { RecurringPatternModule } from '@app/recurring-pattern'
     RoomBookingModule,
     RoomTimeSlotModule,
     RecurringPatternModule,
+    AdministrativeProceduresFormModule,
+    AdministrativeProceduresFormSubmissionModule,
   ],
   controllers: [],
   providers: [],

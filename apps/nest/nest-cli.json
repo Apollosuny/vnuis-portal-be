@@ -137,6 +137,24 @@
       "compilerOptions": {
         "tsConfigPath": "libs/room-booking/tsconfig.lib.json"
       }
+    },
+    "administrative-procedures-form": {
+      "type": "library",
+      "root": "libs/administrative-procedures-form",
+      "entryFile": "index",
+      "sourceRoot": "libs/administrative-procedures-form/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/administrative-procedures-form/tsconfig.lib.json"
+      }
+    },
+    "administrative-procedures-form-submission": {
+      "type": "library",
+      "root": "libs/administrative-procedures-form-submission",
+      "entryFile": "index",
+      "sourceRoot": "libs/administrative-procedures-form-submission/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/administrative-procedures-form-submission/tsconfig.lib.json"
+      }
     }
   }
 }

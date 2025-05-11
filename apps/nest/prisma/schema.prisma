@@ -197,7 +197,8 @@ model AdministrativeProceduresForm {
 
   data Json
 
-  name                 String
+  name                 String  @unique
+  slug                 String  @unique
   description          String
   type                 String
   isActive             Boolean @default(true)
