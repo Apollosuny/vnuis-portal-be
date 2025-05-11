@@ -56,9 +56,10 @@ model Student {
   address    String?
 
   // Relations
-  userId   String        @unique @db.Uuid
-  user     User          @relation(fields: [userId], references: [id])
+  userId   String                                   @unique @db.Uuid
+  user     User                                     @relation(fields: [userId], references: [id])
   bookings RoomBooking[]
+  forms    AdministrativeProceduresFormSubmission[]
 }
 
 model Operator {
@@ -77,7 +78,9 @@ model Operator {
   userId String @unique @db.Uuid
   user   User   @relation(fields: [userId], references: [id])
 
-  bookings RoomBooking[]
+  bookings     RoomBooking[]
+  forms        AdministrativeProceduresForm[]
+  formsHandled AdministrativeProceduresFormSubmission[]
 }
 
 model Room {
@@ -184,4 +187,59 @@ enum Frequency {
   WEEKLY
   MONTHLY
   YEARLY
+}
+
+model AdministrativeProceduresForm {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  data Json
+
+  name                 String
+  description          String
+  type                 String
+  isActive             Boolean @default(true)
+  fileUrl              String?
+  allowEditAfterSubmit Boolean @default(false)
+  requireApproval      Boolean @default(false)
+
+  metadata Json?
+
+  // Relations
+  submissions         AdministrativeProceduresFormSubmission[]
+  createdByOperatorId String?                                  @db.Uuid
+  createdBy           Operator?                                @relation(fields: [createdByOperatorId], references: [id])
+}
+
+model AdministrativeProceduresFormSubmission {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  result Json
+
+  status FormSubmissionStatus @default(PENDING)
+
+  remarks            String?
+  handleAt           DateTime?
+  handleByOperatorId String?   @db.Uuid
+
+  // Relations
+  formId String                       @db.Uuid
+  form   AdministrativeProceduresForm @relation(fields: [formId], references: [id])
+
+  studentId String  @db.Uuid
+  student   Student @relation(fields: [studentId], references: [id])
+
+  handleBy Operator? @relation(fields: [handleByOperatorId], references: [id])
+}
+
+enum FormSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
