@@ -48,7 +48,7 @@ describe('AdministrativeProceduresForm', () => {
           ],
         },
       }
-      const res = await uc.request((r) => r.post('/administrative-procedures-form/create')).send(payload)
+      const res = await uc.request((r) => r.post('/official-forms/create')).send(payload)
       expect(res).toBeCreated()
     })
   })

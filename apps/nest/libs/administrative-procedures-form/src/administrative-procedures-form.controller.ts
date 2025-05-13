@@ -7,8 +7,8 @@ import { UserEntity } from '@app/user/entities/user.entity'
 import { CreateFormDto } from './dtos/create-form.dto'
 import { JwtGuard } from '@app/auth/guards/jwt.guard'
 
-@ApiTags('administrative-procedures-form')
-@Controller('administrative-procedures-form')
+@ApiTags('official-forms')
+@Controller('official-forms')
 export class AdministrativeProceduresFormController {
   constructor(private readonly _administrativeProceduresFormService: AdministrativeProceduresFormService) {}
 
