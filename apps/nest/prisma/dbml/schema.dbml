@@ -1,0 +1,264 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  username String [unique, not null]
+  password String
+  jwtValidFrom DateTime [default: `now()`, not null]
+  lastLoginAt DateTime
+  blocked Boolean [not null, default: false]
+  role Role [not null, default: 'STUDENT']
+  student Student
+  operator Operator
+}
+
+Table Student {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  studentId String [not null]
+  firstName String [not null]
+  lastName String [not null]
+  avatarUrl String
+  dob DateTime [not null]
+  enrollYear Int [not null]
+  major String [not null]
+  email String [not null]
+  phone String
+  address String
+  userId String [unique, not null]
+  user User [not null]
+  bookings RoomBooking [not null]
+  forms AdministrativeProceduresFormSubmission [not null]
+  eventRegistrations EventRegistration [not null]
+}
+
+Table Operator {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  firstName String [not null]
+  lastName String [not null]
+  avatarUrl String
+  email String [not null]
+  phone String
+  userId String [unique, not null]
+  user User [not null]
+  bookings RoomBooking [not null]
+  forms AdministrativeProceduresForm [not null]
+  formsHandled AdministrativeProceduresFormSubmission [not null]
+  events Event [not null]
+  eventRegistrationsHandled EventRegistration [not null]
+}
+
+Table Room {
+  roomId String [pk]
+  name String [unique, not null]
+  description String
+  capacity Int [not null]
+  location String [not null]
+  type RoomType [not null]
+  isAvailable Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  timeSlots RoomTimeSlot [not null]
+  bookings RoomBooking [not null]
+}
+
+Table RoomTimeSlot {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  startTime DateTime [not null]
+  endTime DateTime [not null]
+  dowsBit Int [not null]
+  roomId String [not null]
+  room Room [not null]
+}
+
+Table RoomBooking {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  startTime DateTime [not null]
+  endTime DateTime [not null]
+  duration Int [not null]
+  purpose String [not null]
+  handleAt DateTime
+  remarks String
+  attendees Int
+  isRecurring Boolean [not null, default: false]
+  status RoomBookingStatus [not null, default: 'PENDING']
+  roomId String [not null]
+  room Room [not null]
+  studentId String [not null]
+  student Student [not null]
+  handleByOperatorId String
+  handleBy Operator
+  recurringPattern RecurringPattern
+}
+
+Table RecurringPattern {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  startDate DateTime [not null]
+  endDate DateTime [not null]
+  frequency Frequency [not null]
+  interval Int [not null]
+  dowsBit Int [not null]
+  bookingId String [unique, not null]
+  booking RoomBooking [not null]
+}
+
+Table AdministrativeProceduresForm {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  data Json [not null]
+  name String [unique, not null]
+  slug String [unique, not null]
+  description String [not null]
+  type String [not null]
+  isActive Boolean [not null, default: true]
+  fileUrl String
+  allowEditAfterSubmit Boolean [not null, default: false]
+  requireApproval Boolean [not null, default: false]
+  metadata Json
+  submissions AdministrativeProceduresFormSubmission [not null]
+  createdByOperatorId String
+  createdBy Operator
+}
+
+Table AdministrativeProceduresFormSubmission {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  result Json [not null]
+  status FormSubmissionStatus [not null, default: 'PENDING']
+  remarks String
+  handleAt DateTime
+  handleByOperatorId String
+  formId String [not null]
+  form AdministrativeProceduresForm [not null]
+  studentId String [not null]
+  student Student [not null]
+  handleBy Operator
+}
+
+Table Event {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  name String [not null]
+  description String [not null]
+  startTime DateTime [not null]
+  endTime DateTime [not null]
+  location String [not null]
+  capacity Int [not null]
+  isPublished Boolean [not null, default: false]
+  imageUrl String
+  category String
+  registrationDeadline DateTime
+  requireApproval Boolean [not null, default: false]
+  metadata Json
+  createdByOperatorId String [not null]
+  createdBy Operator [not null]
+  registrations EventRegistration [not null]
+}
+
+Table EventRegistration {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  status EventRegistrationStatus [not null, default: 'PENDING']
+  handleAt DateTime
+  remarks String
+  additionalInfo Json
+  eventId String [not null]
+  event Event [not null]
+  studentId String [not null]
+  student Student [not null]
+  handleByOperatorId String
+  handleBy Operator
+
+  indexes {
+    (eventId, studentId) [unique]
+  }
+}
+
+Enum Role {
+  STUDENT
+  ADMIN
+  SUPERADMIN
+}
+
+Enum RoomType {
+  CLASSROOM
+  LAB
+  EVENT
+}
+
+Enum RoomBookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+Enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+Enum FormSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+Enum EventRegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  ATTENDED
+}
+
+Ref: Student.userId - User.id
+
+Ref: Operator.userId - User.id
+
+Ref: RoomTimeSlot.roomId > Room.roomId
+
+Ref: RoomBooking.roomId > Room.roomId
+
+Ref: RoomBooking.studentId > Student.id
+
+Ref: RoomBooking.handleByOperatorId > Operator.id
+
+Ref: RecurringPattern.bookingId - RoomBooking.id
+
+Ref: AdministrativeProceduresForm.createdByOperatorId > Operator.id
+
+Ref: AdministrativeProceduresFormSubmission.formId > AdministrativeProceduresForm.id
+
+Ref: AdministrativeProceduresFormSubmission.studentId > Student.id
+
+Ref: AdministrativeProceduresFormSubmission.handleByOperatorId > Operator.id
+
+Ref: Event.createdByOperatorId > Operator.id
+
+Ref: EventRegistration.eventId > Event.id
+
+Ref: EventRegistration.studentId > Student.id
+
+Ref: EventRegistration.handleByOperatorId > Operator.id

@@ -11,9 +11,9 @@ import { AppClassSerializerInterceptor } from './interceptors/app-class-serializ
 preboot()
 
 export async function setupNestApp(app: INestApplication) {
-  app.useGlobalPipes(
-    new ValidationPipe({ transform: true, transformOptions: { strategy: 'excludeAll', exposeUnsetFields: false } }),
-  )
+  // app.useGlobalPipes(
+  //   new ValidationPipe({ transform: true, transformOptions: { strategy: 'excludeAll', exposeUnsetFields: false } }),
+  // )
   app.useGlobalInterceptors(
     new AppClassSerializerInterceptor(app.get(HttpAdapterHost), app.get(Reflector), {
       strategy: 'excludeAll',

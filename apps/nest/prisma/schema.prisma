@@ -9,6 +9,10 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -56,10 +60,11 @@ model Student {
   address    String?
 
   // Relations
-  userId   String                                   @unique @db.Uuid
-  user     User                                     @relation(fields: [userId], references: [id])
-  bookings RoomBooking[]
-  forms    AdministrativeProceduresFormSubmission[]
+  userId             String                                   @unique @db.Uuid
+  user               User                                     @relation(fields: [userId], references: [id])
+  bookings           RoomBooking[]
+  forms              AdministrativeProceduresFormSubmission[]
+  eventRegistrations EventRegistration[]
 }
 
 model Operator {
@@ -78,9 +83,11 @@ model Operator {
   userId String @unique @db.Uuid
   user   User   @relation(fields: [userId], references: [id])
 
-  bookings     RoomBooking[]
-  forms        AdministrativeProceduresForm[]
-  formsHandled AdministrativeProceduresFormSubmission[]
+  bookings                  RoomBooking[]
+  forms                     AdministrativeProceduresForm[]
+  formsHandled              AdministrativeProceduresFormSubmission[]
+  events                    Event[]
+  eventRegistrationsHandled EventRegistration[]                      @relation("EventRegistrationHandler")
 }
 
 model Room {
@@ -243,4 +250,68 @@ enum FormSubmissionStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+// Event management models
+model Event {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name        String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  location    String
+  capacity    Int
+  isPublished Boolean  @default(false)
+  imageUrl    String?
+
+  // Additional event information
+  category             String?
+  registrationDeadline DateTime?
+  requireApproval      Boolean   @default(false)
+  metadata             Json?
+
+  // Relations
+  createdByOperatorId String              @db.Uuid
+  createdBy           Operator            @relation(fields: [createdByOperatorId], references: [id])
+  registrations       EventRegistration[]
+
+  @@index([startTime, endTime])
+}
+
+model EventRegistration {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status EventRegistrationStatus @default(PENDING)
+
+  handleAt       DateTime?
+  remarks        String?
+  additionalInfo Json?
+
+  // Relations
+  eventId String @db.Uuid
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  studentId String  @db.Uuid
+  student   Student @relation(fields: [studentId], references: [id])
+
+  handleByOperatorId String?   @db.Uuid
+  handleBy           Operator? @relation("EventRegistrationHandler", fields: [handleByOperatorId], references: [id])
+
+  @@unique([eventId, studentId])
+  @@index([eventId, status])
+}
+
+enum EventRegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  ATTENDED
 }
