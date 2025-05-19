@@ -19,106 +19,40 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/auth": [
-        "libs/auth/src",
-        "libs/auth/src"
-      ],
-      "@app/auth/*": [
-        "libs/auth/src/*",
-        "libs/auth/src/*"
-      ],
-      "@app/core": [
-        "libs/core/src"
-      ],
-      "@app/core/*": [
-        "libs/core/src/*"
-      ],
-      "@app/profile": [
-        "libs/profile/src"
-      ],
-      "@app/profile/*": [
-        "libs/profile/src/*"
-      ],
-      "@app/user": [
-        "libs/user/src",
-        "libs/user/src"
-      ],
-      "@app/user/*": [
-        "libs/user/src/*",
-        "libs/user/src/*"
-      ],
-      "@app/mailer": [
-        "libs/mailer/src"
-      ],
-      "@app/mailer/*": [
-        "libs/mailer/src/*"
-      ],
-      "@app/spec": [
-        "libs/spec/src"
-      ],
-      "@app/spec/*": [
-        "libs/spec/src/*"
-      ],
-      "@app/helper": [
-        "libs/helper/src"
-      ],
-      "@app/helper/*": [
-        "libs/helper/src/*"
-      ],
-      "@app/student": [
-        "libs/student/src"
-      ],
-      "@app/student/*": [
-        "libs/student/src/*"
-      ],
-      "@app/operator": [
-        "libs/operator/src"
-      ],
-      "@app/operator/*": [
-        "libs/operator/src/*"
-      ],
-      "@app/room": [
-        "libs/room/src"
-      ],
-      "@app/room/*": [
-        "libs/room/src/*"
-      ],
-      "@app/room-timeslot": [
-        "libs/room-timeslot/src"
-      ],
-      "@app/room-timeslot/*": [
-        "libs/room-timeslot/src/*"
-      ],
-      "@app/room-time-slot": [
-        "libs/room-time-slot/src"
-      ],
-      "@app/room-time-slot/*": [
-        "libs/room-time-slot/src/*"
-      ],
-      "@app/recurring-pattern": [
-        "libs/recurring-pattern/src"
-      ],
-      "@app/recurring-pattern/*": [
-        "libs/recurring-pattern/src/*"
-      ],
-      "@app/room-booking": [
-        "libs/room-booking/src"
-      ],
-      "@app/room-booking/*": [
-        "libs/room-booking/src/*"
-      ],
-      "@app/administrative-procedures-form": [
-        "libs/administrative-procedures-form/src"
-      ],
-      "@app/administrative-procedures-form/*": [
-        "libs/administrative-procedures-form/src/*"
-      ],
-      "@app/administrative-procedures-form-submission": [
-        "libs/administrative-procedures-form-submission/src"
-      ],
-      "@app/administrative-procedures-form-submission/*": [
-        "libs/administrative-procedures-form-submission/src/*"
-      ]
+      "@app/auth": ["libs/auth/src", "libs/auth/src"],
+      "@app/auth/*": ["libs/auth/src/*", "libs/auth/src/*"],
+      "@app/core": ["libs/core/src"],
+      "@app/core/*": ["libs/core/src/*"],
+      "@app/profile": ["libs/profile/src"],
+      "@app/profile/*": ["libs/profile/src/*"],
+      "@app/user": ["libs/user/src", "libs/user/src"],
+      "@app/user/*": ["libs/user/src/*", "libs/user/src/*"],
+      "@app/mailer": ["libs/mailer/src"],
+      "@app/mailer/*": ["libs/mailer/src/*"],
+      "@app/spec": ["libs/spec/src"],
+      "@app/spec/*": ["libs/spec/src/*"],
+      "@app/helper": ["libs/helper/src"],
+      "@app/helper/*": ["libs/helper/src/*"],
+      "@app/student": ["libs/student/src"],
+      "@app/student/*": ["libs/student/src/*"],
+      "@app/operator": ["libs/operator/src"],
+      "@app/operator/*": ["libs/operator/src/*"],
+      "@app/room": ["libs/room/src"],
+      "@app/room/*": ["libs/room/src/*"],
+      "@app/room-timeslot": ["libs/room-timeslot/src"],
+      "@app/room-timeslot/*": ["libs/room-timeslot/src/*"],
+      "@app/room-time-slot": ["libs/room-time-slot/src"],
+      "@app/room-time-slot/*": ["libs/room-time-slot/src/*"],
+      "@app/recurring-pattern": ["libs/recurring-pattern/src"],
+      "@app/recurring-pattern/*": ["libs/recurring-pattern/src/*"],
+      "@app/room-booking": ["libs/room-booking/src"],
+      "@app/room-booking/*": ["libs/room-booking/src/*"],
+      "@app/administrative-procedures-form": ["libs/administrative-procedures-form/src"],
+      "@app/administrative-procedures-form/*": ["libs/administrative-procedures-form/src/*"],
+      "@app/administrative-procedures-form-submission": ["libs/administrative-procedures-form-submission/src"],
+      "@app/administrative-procedures-form-submission/*": ["libs/administrative-procedures-form-submission/src/*"],
+      "@app/event": ["libs/event/src"],
+      "@app/event/*": ["libs/event/src/*"]
     }
   }
 }

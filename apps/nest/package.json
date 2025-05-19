@@ -159,7 +159,8 @@
       "^@app/recurring-pattern(|/.*)$": "<rootDir>/libs/recurring-pattern/src/$1",
       "^@app/room-booking(|/.*)$": "<rootDir>/libs/room-booking/src/$1",
       "^@app/administrative-procedures-form(|/.*)$": "<rootDir>/libs/administrative-procedures-form/src/$1",
-      "^@app/administrative-procedures-form-submission(|/.*)$": "<rootDir>/libs/administrative-procedures-form-submission/src/$1"
+      "^@app/administrative-procedures-form-submission(|/.*)$": "<rootDir>/libs/administrative-procedures-form-submission/src/$1",
+      "^@app/event(|/.*)$": "<rootDir>/libs/event/src/$1"
     }
   }
 }

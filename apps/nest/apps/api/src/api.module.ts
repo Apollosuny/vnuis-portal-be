@@ -10,6 +10,7 @@ import { RoomTimeSlotModule } from '@app/room-time-slot'
 import { RecurringPatternModule } from '@app/recurring-pattern'
 import { AdministrativeProceduresFormModule } from '@app/administrative-procedures-form'
 import { AdministrativeProceduresFormSubmissionModule } from '@app/administrative-procedures-form-submission'
+import { EventModule } from '@app/event'
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AdministrativeProceduresFormSubmissionModule } from '@app/administrativ
     RecurringPatternModule,
     AdministrativeProceduresFormModule,
     AdministrativeProceduresFormSubmissionModule,
+    EventModule,
   ],
   controllers: [],
   providers: [],
