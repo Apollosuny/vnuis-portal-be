@@ -17,6 +17,7 @@ import { EventRegistrationEntity } from './entities/event-registration.entity'
 import { QueryEventRegistrationDto } from './dtos/query-event-registration.dto'
 import { UpdateRegistrationStatusDto } from './dtos/update-registration-status.dto'
 import { Roles } from '@app/core/decorators/role.decorator'
+import { UserEntity } from '@app/user/entities/user.entity'
 
 @Controller('events')
 export class EventController {
@@ -44,7 +45,7 @@ export class EventController {
   @ApiOkResponse({ type: () => EventEntity })
   @UseGuards(JwtGuard)
   @Roles(Role.ADMIN)
-  createEvent(@Body() createEventDto: CreateEventDto, @CurUser() user: User) {
+  createEvent(@Body() createEventDto: CreateEventDto, @CurUser() user: UserEntity) {
     return this.eventService.createEvent(createEventDto, user)
   }
 

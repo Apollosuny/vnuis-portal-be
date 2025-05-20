@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { PrismaService } from 'nestjs-prisma'
 import { CreateEventDto } from './dtos/create-event.dto'
 import { UpdateEventDto } from './dtos/update-event.dto'
@@ -10,6 +10,7 @@ import { RegisterEventDto } from './dtos/register-event.dto'
 import { EventRegistrationEntity } from './entities/event-registration.entity'
 import { UpdateRegistrationStatusDto } from './dtos/update-registration-status.dto'
 import { QueryEventRegistrationDto } from './dtos/query-event-registration.dto'
+import { UserEntity } from '@app/user/entities/user.entity'
 
 @Injectable()
 export class EventService {
@@ -38,14 +39,18 @@ export class EventService {
     return th.toInstanceSafe(EventEntity, event)
   }
 
-  async createEvent(dto: CreateEventDto, user: User) {
-    const event = await this.prisma.event.create({
-      data: {
-        ...dto,
-        createdByOperatorId: user.id,
-      },
-    })
-    return th.toInstanceSafe(EventEntity, event)
+  async createEvent(dto: CreateEventDto, user: UserEntity) {
+    try {
+      const event = await this.prisma.event.create({
+        data: {
+          ...dto,
+          createdByOperatorId: user.operator.id,
+        },
+      })
+      return th.toInstanceSafe(EventEntity, event)
+    } catch (error) {
+      throw new BadRequestException('Failed to create event', error.message)
+    }
   }
 
   async updateEvent(id: string, dto: UpdateEventDto, user: User) {
