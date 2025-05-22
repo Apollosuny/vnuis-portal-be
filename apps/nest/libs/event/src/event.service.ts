@@ -54,33 +54,174 @@ export class EventService {
   }
 
   async updateEvent(id: string, dto: UpdateEventDto, user: User) {
-    const event = await this.prisma.event.update({
-      where: { id, createdByOperatorId: user.id },
-      data: dto,
-    })
-    return th.toInstanceSafe(EventEntity, event)
+    try {
+      // First check if the event exists
+      const existingEvent = await this.prisma.event.findUnique({
+        where: { id },
+      })
+
+      if (!existingEvent) {
+        throw new Error(`Event with ID ${id} not found`)
+      }
+
+      // Then check if this user has permission to update
+      if (existingEvent.createdByOperatorId !== user.id) {
+        // For testing purposes, log the ID information
+        console.log('Event createdByOperatorId:', existingEvent.createdByOperatorId)
+        console.log('Current user ID:', user.id)
+
+        // Find the operator for the user
+        const operator = await this.prisma.operator.findFirst({
+          where: { userId: user.id },
+        })
+
+        console.log('Current user operator ID:', operator?.id)
+
+        // Check if the event was created by this operator (using operatorId instead of userId)
+        if (operator && existingEvent.createdByOperatorId === operator.id) {
+          // Allow the update if the operator matches
+          const event = await this.prisma.event.update({
+            where: { id },
+            data: dto,
+          })
+          return th.toInstanceSafe(EventEntity, event)
+        }
+
+        throw new Error(`User ${user.id} does not have permission to update event ${id}`)
+      }
+
+      // Proceed with the update
+      const event = await this.prisma.event.update({
+        where: { id, createdByOperatorId: user.id },
+        data: dto,
+      })
+      return th.toInstanceSafe(EventEntity, event)
+    } catch (error) {
+      throw new BadRequestException(`Failed to update event: ${error.message}`)
+    }
   }
 
   async deleteEvent(id: string, user: User) {
-    await this.prisma.event.delete({
-      where: { id, createdByOperatorId: user.id },
-    })
+    try {
+      // First check if the event exists
+      const existingEvent = await this.prisma.event.findUnique({
+        where: { id },
+      })
+
+      if (!existingEvent) {
+        throw new Error(`Event with ID ${id} not found`)
+      }
+
+      // Check if this user has permission by user ID
+      if (existingEvent.createdByOperatorId !== user.id) {
+        // Find the operator for the user
+        const operator = await this.prisma.operator.findFirst({
+          where: { userId: user.id },
+        })
+
+        // Check if the event was created by this operator
+        if (operator && existingEvent.createdByOperatorId === operator.id) {
+          // Allow the delete if the operator matches
+          await this.prisma.event.delete({
+            where: { id },
+          })
+          return
+        }
+
+        throw new Error(`User ${user.id} does not have permission to delete event ${id}`)
+      }
+
+      // Proceed with the delete
+      await this.prisma.event.delete({
+        where: { id, createdByOperatorId: user.id },
+      })
+    } catch (error) {
+      throw new BadRequestException(`Failed to delete event: ${error.message}`)
+    }
   }
 
   async publishEvent(id: string, user: User) {
-    const event = await this.prisma.event.update({
-      where: { id, createdByOperatorId: user.id },
-      data: { isPublished: true },
-    })
-    return th.toInstanceSafe(EventEntity, event)
+    try {
+      // First check if the event exists
+      const existingEvent = await this.prisma.event.findUnique({
+        where: { id },
+      })
+
+      if (!existingEvent) {
+        throw new Error(`Event with ID ${id} not found`)
+      }
+
+      // Check if this user has permission by user ID
+      if (existingEvent.createdByOperatorId !== user.id) {
+        // Find the operator for the user
+        const operator = await this.prisma.operator.findFirst({
+          where: { userId: user.id },
+        })
+
+        // Check if the event was created by this operator
+        if (operator && existingEvent.createdByOperatorId === operator.id) {
+          // Allow the update if the operator matches
+          const event = await this.prisma.event.update({
+            where: { id },
+            data: { isPublished: true },
+          })
+          return th.toInstanceSafe(EventEntity, event)
+        }
+
+        throw new Error(`User ${user.id} does not have permission to publish event ${id}`)
+      }
+
+      // Proceed with the update
+      const event = await this.prisma.event.update({
+        where: { id, createdByOperatorId: user.id },
+        data: { isPublished: true },
+      })
+      return th.toInstanceSafe(EventEntity, event)
+    } catch (error) {
+      throw new BadRequestException(`Failed to publish event: ${error.message}`)
+    }
   }
 
   async unpublishEvent(id: string, user: User) {
-    const event = await this.prisma.event.update({
-      where: { id, createdByOperatorId: user.id },
-      data: { isPublished: false },
-    })
-    return th.toInstanceSafe(EventEntity, event)
+    try {
+      // First check if the event exists
+      const existingEvent = await this.prisma.event.findUnique({
+        where: { id },
+      })
+
+      if (!existingEvent) {
+        throw new Error(`Event with ID ${id} not found`)
+      }
+
+      // Check if this user has permission by user ID
+      if (existingEvent.createdByOperatorId !== user.id) {
+        // Find the operator for the user
+        const operator = await this.prisma.operator.findFirst({
+          where: { userId: user.id },
+        })
+
+        // Check if the event was created by this operator
+        if (operator && existingEvent.createdByOperatorId === operator.id) {
+          // Allow the update if the operator matches
+          const event = await this.prisma.event.update({
+            where: { id },
+            data: { isPublished: false },
+          })
+          return th.toInstanceSafe(EventEntity, event)
+        }
+
+        throw new Error(`User ${user.id} does not have permission to unpublish event ${id}`)
+      }
+
+      // Proceed with the update
+      const event = await this.prisma.event.update({
+        where: { id, createdByOperatorId: user.id },
+        data: { isPublished: false },
+      })
+      return th.toInstanceSafe(EventEntity, event)
+    } catch (error) {
+      throw new BadRequestException(`Failed to unpublish event: ${error.message}`)
+    }
   }
 
   async getEventRegistrations(queryEventRegistrationDto: QueryEventRegistrationDto) {
@@ -107,41 +248,45 @@ export class EventService {
   }
 
   async registerEvent(dto: RegisterEventDto, user: User) {
-    const event = await this.prisma.event.findUniqueOrThrow({
-      where: { id: dto.eventId },
-    })
+    try {
+      const event = await this.prisma.event.findUniqueOrThrow({
+        where: { id: dto.eventId },
+      })
 
-    const student = await this.prisma.student.findFirst({
-      where: { userId: user.id },
-    })
+      const student = await this.prisma.student.findFirst({
+        where: { userId: user.id },
+      })
 
-    if (!student) {
-      throw new Error('Student not found')
-    }
+      if (!student) {
+        throw new Error('Student not found')
+      }
 
-    const existingRegistration = await this.prisma.eventRegistration.findUnique({
-      where: {
-        eventId_studentId: {
+      const existingRegistration = await this.prisma.eventRegistration.findUnique({
+        where: {
+          eventId_studentId: {
+            eventId: dto.eventId,
+            studentId: student.id,
+          },
+        },
+      })
+
+      if (existingRegistration) {
+        throw new Error('You have already registered for this event')
+      }
+
+      const registration = await this.prisma.eventRegistration.create({
+        data: {
           eventId: dto.eventId,
           studentId: student.id,
+          status: 'PENDING' as any,
+          additionalInfo: dto.additionalInfo,
         },
-      },
-    })
+      })
 
-    if (existingRegistration) {
-      throw new Error('You have already registered for this event')
+      return th.toInstanceSafe(EventRegistrationEntity, registration)
+    } catch (error) {
+      console.log('Error during registration:', error)
     }
-
-    const registration = await this.prisma.eventRegistration.create({
-      data: {
-        eventId: dto.eventId,
-        studentId: student.id,
-        status: 'PENDING' as any,
-        additionalInfo: dto.additionalInfo,
-      },
-    })
-
-    return th.toInstanceSafe(EventRegistrationEntity, registration)
   }
 
   async updateRegistrationStatus(id: string, dto: UpdateRegistrationStatusDto, user: User) {

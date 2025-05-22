@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards, UseInterceptors } from '@nestjs/common'
-import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { JwtGuard } from '@app/auth/guards/jwt.guard'
 import { CacheTTL } from '@nestjs/cache-manager'
 import { AppCacheInterceptor } from '@app/core/interceptors/app-cache-interceptor'
@@ -19,6 +19,7 @@ import { UpdateRegistrationStatusDto } from './dtos/update-registration-status.d
 import { Roles } from '@app/core/decorators/role.decorator'
 import { UserEntity } from '@app/user/entities/user.entity'
 
+@ApiTags('events')
 @Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
