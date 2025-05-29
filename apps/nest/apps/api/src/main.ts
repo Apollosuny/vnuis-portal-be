@@ -12,6 +12,9 @@ if (localDev) {
     const app = await NestFactory.create(ApiModule)
     await setupNestApp(app)
     app.setGlobalPrefix('api')
+    app.enableCors({
+      origin: '*',
+    })
     setupSwaggerUI(app)
     await app.listen(process.env.port ?? 4000)
     console.log(`Server is running at http://localhost:${process.env.port ?? 4000}/docs`)
