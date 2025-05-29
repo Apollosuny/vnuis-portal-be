@@ -67,16 +67,18 @@ export class RoomTimeSlotService {
       await this._prisma.roomTimeSlot.createMany({
         data: timeSlotData.map((slot) => ({
           ...slot,
-          startTime: DateTime.fromFormat(slot.startTime, 'HH:mm').toISO(),
-          endTime: DateTime.fromFormat(slot.endTime, 'HH:mm').toISO(),
+          // For database storage, we need full ISO dates
+          startTime: DateTime.fromFormat(slot.startTime, 'HH:mm').toJSDate(),
+          endTime: DateTime.fromFormat(slot.endTime, 'HH:mm').toJSDate(),
         })),
       })
 
       return th.toInstanceSafe(CreateTimeSlotResponseDto, {
         success: true,
         timeSlots: timeSlotData.map((slot) => ({
-          startTime: DateTime.fromFormat(slot.startTime, 'HH:mm').toJSDate(),
-          endTime: DateTime.fromFormat(slot.endTime, 'HH:mm').toJSDate(),
+          // Return the time strings in HH:MM format without dates
+          startTime: slot.startTime,
+          endTime: slot.endTime,
           dows: decodeDowsBit(slot.dowsBit),
         })),
       })

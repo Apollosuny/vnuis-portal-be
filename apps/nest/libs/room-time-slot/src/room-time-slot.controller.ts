@@ -23,7 +23,7 @@ export class RoomTimeSlotController {
 
   @Post('create')
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: CreateTimeSlotResponseDto })
   createTimeSlot(@Body() dto: CreateTimeSlotDto) {

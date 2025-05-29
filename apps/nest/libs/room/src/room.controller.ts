@@ -44,7 +44,7 @@ export class RoomController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => RoomEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   createRoom(@Body() createRoomDto: CreateRoomDto, @CurUser() user: User) {
     return this._roomService.createRoom(createRoomDto, user)
   }
@@ -53,7 +53,7 @@ export class RoomController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => RoomEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   updateRoom(@Param('roomId') roomId: string, @Body() updateRoomDto: UpdateRoomDto, @CurUser() user: User) {
     return this._roomService.updateRoom(roomId, updateRoomDto, user)
   }
