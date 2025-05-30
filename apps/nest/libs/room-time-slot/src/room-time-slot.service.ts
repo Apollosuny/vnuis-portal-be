@@ -46,98 +46,106 @@ export class RoomTimeSlotService {
       const timeSlotData = timeRange.map((timeSlot) => {
         const { startTime: startTimePrimitive, endTime: endTimePrimitive, dows: dowsPrimitive } = timeSlot
 
-        const startDatePrimitive = DateTime.fromISO(startTimePrimitive)
-        const endDatePrimitive = DateTime.fromISO(endTimePrimitive)
+        // Extract HH:MM from any format
+        const getTimeString = (time: string): string => {
+          if (!time) return ''
+          // If it's a full ISO date string, extract just the time part
+          if (time.includes('T')) {
+            const parts = time.split('T')[1]?.split('.')
+            if (parts && parts.length > 0) {
+              return parts[0].substring(0, 5)
+            }
+          }
+          // If it's already in HH:MM format
+          if (time.match(/^\d{1,2}:\d{2}$/)) {
+            return time
+          }
+          // Default to empty if can't parse
+          return ''
+        }
 
-        // Convert start and end times to UTC
-        const { startTime, endTime, dowsBit } = this.calculateUtcTimeData(
-          startDatePrimitive,
-          endDatePrimitive,
-          dowsPrimitive,
-        )
+        const startTimeStr = getTimeString(startTimePrimitive)
+        const endTimeStr = getTimeString(endTimePrimitive)
+
+        // Normalize and encode days of the week
+        const dows = uniq(dowsPrimitive).map((dow) => dow.toLowerCase())
+        const dowsBit = encodeDowsBit(dows)
 
         return {
-          startTime,
-          endTime,
+          startTime: startTimeStr,
+          endTime: endTimeStr,
           dowsBit,
           roomId,
         }
       })
 
+      // Create reference date objects for database storage with today's date
+      // but with the specified times
+      const today = new Date()
+
+      // Save time slots in database
       await this._prisma.roomTimeSlot.createMany({
-        data: timeSlotData.map((slot) => ({
-          ...slot,
-          // For database storage, we need full ISO dates
-          startTime: DateTime.fromFormat(slot.startTime, 'HH:mm').toJSDate(),
-          endTime: DateTime.fromFormat(slot.endTime, 'HH:mm').toJSDate(),
-        })),
+        data: timeSlotData.map((slot) => {
+          const [startHour, startMinute] = slot.startTime.split(':').map(Number)
+          const [endHour, endMinute] = slot.endTime.split(':').map(Number)
+
+          const startDate = new Date(today)
+          startDate.setHours(startHour, startMinute, 0, 0)
+
+          const endDate = new Date(today)
+          endDate.setHours(endHour, endMinute, 0, 0)
+
+          return {
+            ...slot,
+            startTime: startDate,
+            endTime: endDate,
+          }
+        }),
       })
 
       return th.toInstanceSafe(CreateTimeSlotResponseDto, {
         success: true,
         timeSlots: timeSlotData.map((slot) => ({
-          // Return the time strings in HH:MM format without dates
           startTime: slot.startTime,
           endTime: slot.endTime,
           dows: decodeDowsBit(slot.dowsBit),
         })),
       })
     } catch (error) {
+      console.error('Error creating time slot:', error)
       throw new BadRequestException('Error creating time slot')
     }
   }
 
-  // Must be ensure that the available time slot is in the same timezone and the same date
-  private calculateUtcTimeData(startDatePrimitive: DateTime, endDatePrimitive: DateTime, dowsPrimitive: string[]) {
-    // Convert start and end dates to UTC
-    const startDate = startDatePrimitive.toUTC()
-    const endDate = endDatePrimitive.toUTC()
-
-    // Check if UTC date is after or before the primitive date
-    const isUtcAfter = startDate.toISODate() > startDatePrimitive.toISODate()
-    const isUtcBefore = endDate.toISODate() < endDatePrimitive.toISODate()
-
-    // Normalize and encode days of the week
-    const dows = uniq(dowsPrimitive).map((dow) => dow.toLowerCase())
-    const bitPrimitive = encodeDowsBit(dows)
-
-    // Adjust dowsBit based on UTC offset
-    const dowsBit = isUtcAfter
-      ? pushDowsBitForward(bitPrimitive)
-      : isUtcBefore
-        ? pushDowsBitBackward(bitPrimitive)
-        : bitPrimitive
-
-    const startTime = startDate.toFormat('HH:mm')
-    const endTime = endDate.toFormat('HH:mm')
-
-    return {
-      startTime,
-      endTime,
-      dowsBit,
-    }
-  }
-
   deserializeTimeSlotRecord(record: RoomTimeSlotEntity, now: DateTime, offset?: number) {
-    now = now.toUTC()
+    // Function to extract time string from Date object
+    const getTimeString = (date: Date | null): string => {
+      if (!date) return ''
+      const hours = date.getHours().toString().padStart(2, '0')
+      const minutes = date.getMinutes().toString().padStart(2, '0')
+      return `${hours}:${minutes}`
+    }
 
-    // Parse start and end times
-    const startHours = DateTime.fromJSDate(record.startTime).toUTC().hour
-    const startMinutes = DateTime.fromJSDate(record.startTime).toUTC().minute
-    const endHours = DateTime.fromJSDate(record.endTime).toUTC().hour
-    const endMinutes = DateTime.fromJSDate(record.endTime).toUTC().minute
+    // Handle dates
+    const startTime = record.startTime instanceof Date ? record.startTime : new Date(record.startTime)
+    const endTime = record.endTime instanceof Date ? record.endTime : new Date(record.endTime)
 
-    // Create DateTime
-    // Create DateTime objects for start and end times
-    const startTime = now.set({ hour: startHours, minute: startMinutes })
-    const endTime = now.set({ hour: endHours, minute: endMinutes })
+    // Get time parts
+    const startHours = startTime.getHours()
+    const startMinutes = startTime.getMinutes()
+    const endHours = endTime.getHours()
+    const endMinutes = endTime.getMinutes()
 
-    // Decode the days of week from the bit representation
-    const bitPrimitive = record.dowsBit
-    const dowsUtc = uniq([...decodeDowsBit(bitPrimitive)])
+    // Create DateTime objects for today with these time values
+    const todayWithStartTime = now.set({ hour: startHours, minute: startMinutes, second: 0, millisecond: 0 })
+    const todayWithEndTime = now.set({ hour: endHours, minute: endMinutes, second: 0, millisecond: 0 })
 
-    const startHour = startTime.toFormat('HH:mm')
-    const endHour = endTime.toFormat('HH:mm')
+    // Get simple time strings
+    const startHour = getTimeString(startTime)
+    const endHour = getTimeString(endTime)
+
+    // Decode the days of week
+    const dowsUtc = decodeDowsBit(record.dowsBit)
 
     // Initialize offset values
     let dowsOffset = dowsUtc
@@ -145,13 +153,13 @@ export class RoomTimeSlotService {
     let endHourOffset = endHour
 
     // Adjust for time offset if provided
-    if (offset !== 0) {
-      const timeOffset = startTime.plus({ minutes: offset })
+    if (offset && offset !== 0) {
+      const timeOffset = todayWithStartTime.plus({ minutes: offset })
       const offsetStartOfDay = timeOffset.startOf('day')
-      const utcStartOfDay = startTime.startOf('day')
+      const utcStartOfDay = todayWithStartTime.startOf('day')
 
       // Adjust the days of week bit if the offset crosses a day boundary
-      let bits = bitPrimitive
+      let bits = record.dowsBit
       if (offsetStartOfDay > utcStartOfDay) {
         bits = circularShiftLeft(bits, 1)
       } else if (offsetStartOfDay < utcStartOfDay) {
@@ -161,18 +169,18 @@ export class RoomTimeSlotService {
 
       // Adjust start and end times for the offset
       startHourOffset = timeOffset.toFormat('HH:mm')
-      endHourOffset = endTime.plus({ minutes: offset }).toFormat('HH:mm')
+      endHourOffset = todayWithEndTime.plus({ minutes: offset }).toFormat('HH:mm')
     }
 
     // Return the deserialized and adjusted booking time record
     return {
       id: record.id,
-      startTime: startTime.set({ second: 0, millisecond: 0 }),
-      endTime: endTime.set({ second: 0, millisecond: 0 }),
-      startHour: startHour,
-      endHour: endHour,
-      dowsUtc: dowsUtc,
-      dowsOffset: dowsOffset,
+      startTime: todayWithStartTime,
+      endTime: todayWithEndTime,
+      startHour,
+      endHour,
+      dowsUtc,
+      dowsOffset,
       startHourOffset,
       endHourOffset,
     }
