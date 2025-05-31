@@ -6,6 +6,7 @@ import { QueryRoomDto } from './dtos/query-room.dto'
 import { User } from '@prisma/client'
 import { th } from '@app/helper/transform.helper'
 import { RoomEntity } from './entities/room.entity'
+import { RoomTimeSlotEntity } from '@app/room-time-slot/entities/room-time-slot.entity'
 
 @Injectable()
 export class RoomService {
@@ -28,8 +29,47 @@ export class RoomService {
   }
 
   async getRoom(roomId: string) {
+    return await this.findRoomWithIncludes(roomId, false, false)
+  }
+
+  async getRoomWithTimeSlots(roomId: string) {
+    return await this.findRoomWithIncludes(roomId, true, false)
+  }
+
+  async getRoomWithDetails(roomId: string, includeTimeSlots: boolean, includeBookings: boolean) {
+    return await this.findRoomWithIncludes(roomId, includeTimeSlots, includeBookings)
+  }
+
+  async getRoomWithTimeSlotsForToday(roomId: string) {
+    const today = new Date()
+    const dayOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][today.getDay()]
+
     const room = await this._prisma.room.findUniqueOrThrow({
       where: { roomId },
+      include: {
+        timeSlots: true,
+      },
+    })
+
+    if (room.timeSlots) {
+      const { timeSlots } = room
+      const timeSlotEntities = th.toInstancesSafe(RoomTimeSlotEntity, timeSlots)
+      room.timeSlots = timeSlotEntities.filter((slot) => {
+        return slot.dows.includes(dayOfWeek)
+      })
+    }
+
+    return th.toInstanceSafe(RoomEntity, room)
+  }
+
+  // Helper method để giảm trùng lặp code
+  private async findRoomWithIncludes(roomId: string, includeTimeSlots: boolean, includeBookings: boolean) {
+    const room = await this._prisma.room.findUniqueOrThrow({
+      where: { roomId },
+      include: {
+        timeSlots: includeTimeSlots,
+        bookings: includeBookings,
+      },
     })
     return th.toInstanceSafe(RoomEntity, room)
   }
