@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { Expose } from 'class-transformer'
+import { JsonValue } from '@prisma/client/runtime/library'
+import { Expose, Type } from 'class-transformer'
 import { IsObject, IsOptional } from 'class-validator'
+import { QuestionsDto } from '../dtos/question.dto'
 
 export class AdministrativeProceduresFormEntity {
   @Expose()
@@ -8,9 +10,10 @@ export class AdministrativeProceduresFormEntity {
   id: string
 
   @IsObject()
+  @Type(() => QuestionsDto)
   @Expose()
   @ApiProperty()
-  data: Record<string, any>
+  data: JsonValue | null
 
   @Expose()
   @ApiProperty()

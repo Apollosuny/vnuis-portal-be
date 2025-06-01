@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import { AdministrativeProceduresFormService } from './administrative-procedures-form.service'
 import { AdministrativeProceduresFormEntity } from './entities/administrative-procedures-form.entity'
@@ -11,6 +11,15 @@ import { JwtGuard } from '@app/auth/guards/jwt.guard'
 @Controller('official-forms')
 export class AdministrativeProceduresFormController {
   constructor(private readonly _administrativeProceduresFormService: AdministrativeProceduresFormService) {}
+
+  @Get()
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormEntity, isArray: true })
+  @HttpCode(HttpStatus.OK)
+  getAllForms() {
+    return this._administrativeProceduresFormService.getAllForms()
+  }
 
   @Post('create')
   @UseGuards(JwtGuard)

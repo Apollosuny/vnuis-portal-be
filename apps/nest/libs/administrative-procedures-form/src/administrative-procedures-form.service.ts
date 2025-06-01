@@ -10,6 +10,15 @@ import { AdministrativeProceduresFormEntity } from './entities/administrative-pr
 export class AdministrativeProceduresFormService {
   constructor(private readonly _prisma: PrismaService) {}
 
+  async getAllForms() {
+    try {
+      const forms = await this._prisma.administrativeProceduresForm.findMany({})
+      return th.toInstancesSafe(AdministrativeProceduresFormEntity, forms)
+    } catch (error) {
+      throw new BadRequestException('Error fetching forms')
+    }
+  }
+
   async create(user: UserEntity, dto: CreateFormDto) {
     try {
       const form = await this._prisma.administrativeProceduresForm.create({
