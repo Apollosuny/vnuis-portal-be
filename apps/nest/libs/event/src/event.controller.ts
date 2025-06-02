@@ -24,6 +24,27 @@ import { UserEntity } from '@app/user/entities/user.entity'
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
+  @Get('registrations')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => EventRegistrationEntity, isArray: true })
+  @UseGuards(JwtGuard)
+  @CacheTTL(2000)
+  @UseInterceptors(AppCacheInterceptor)
+  getEventRegistrations(@RawQuery() queryEventRegistrationDto: QueryEventRegistrationDto) {
+    return this.eventService.getEventRegistrations(queryEventRegistrationDto)
+  }
+
+  @Get('registrations/:id')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => EventRegistrationEntity })
+  @UseGuards(JwtGuard)
+  @CacheTTL(2000)
+  @AppCacheKey((req) => `event-registration-${req.params.id}`)
+  @UseInterceptors(AppCacheInterceptor)
+  getEventRegistration(@Param('id') id: string) {
+    return this.eventService.getEventRegistration(id)
+  }
+
   @Get()
   @ApiOkResponse({ type: () => EventEntity, isArray: true })
   @CacheTTL(2000)
@@ -84,27 +105,6 @@ export class EventController {
   @Roles(Role.ADMIN)
   unpublishEvent(@Param('id') id: string, @CurUser() user: User) {
     return this.eventService.unpublishEvent(id, user)
-  }
-
-  @Get('registrations')
-  @ApiBearerAuth()
-  @ApiOkResponse({ type: () => EventRegistrationEntity, isArray: true })
-  @UseGuards(JwtGuard)
-  @CacheTTL(2000)
-  @UseInterceptors(AppCacheInterceptor)
-  getEventRegistrations(@RawQuery() queryEventRegistrationDto: QueryEventRegistrationDto) {
-    return this.eventService.getEventRegistrations(queryEventRegistrationDto)
-  }
-
-  @Get('registrations/:id')
-  @ApiBearerAuth()
-  @ApiOkResponse({ type: () => EventRegistrationEntity })
-  @UseGuards(JwtGuard)
-  @CacheTTL(2000)
-  @AppCacheKey((req) => `event-registration-${req.params.id}`)
-  @UseInterceptors(AppCacheInterceptor)
-  getEventRegistration(@Param('id') id: string) {
-    return this.eventService.getEventRegistration(id)
   }
 
   @Post('register')
