@@ -1,4 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common'
 import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import { AdministrativeProceduresFormSubmissionService } from './administrative-procedures-form-submission.service'
 import { CurUser } from '@app/core/decorators/user.decorator'
@@ -30,6 +40,50 @@ export class AdministrativeProceduresFormSubmissionController {
     } catch (error) {
       console.error('Error transforming submission:', error)
       return submission // Fall back to returning raw data if transformation fails
+    }
+  }
+
+  @Get('user')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity, isArray: true })
+  @HttpCode(HttpStatus.OK)
+  async getUserSubmissions(@CurUser() user: UserEntity) {
+    if (user.role !== 'STUDENT') {
+      throw new UnauthorizedException('Only students can access their form submissions')
+    }
+
+    const submissions = await this._administrativeProceduresFormSubmissionService.getSubmissionsByStudentId(
+      user.student.id,
+    )
+    try {
+      return submissions.map((submission) =>
+        th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submission),
+      )
+    } catch (error) {
+      console.error('Error transforming submissions:', error)
+      return submissions
+    }
+  }
+
+  @Get('form/:formId')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity, isArray: true })
+  @HttpCode(HttpStatus.OK)
+  async getSubmissionsByFormId(@CurUser() user: UserEntity, @Param('formId') formId: string) {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
+      throw new UnauthorizedException('Only administrators can access all form submissions')
+    }
+
+    const submissions = await this._administrativeProceduresFormSubmissionService.getSubmissionsByFormId(formId)
+    try {
+      return submissions.map((submission) =>
+        th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submission),
+      )
+    } catch (error) {
+      console.error('Error transforming submissions:', error)
+      return submissions
     }
   }
 }

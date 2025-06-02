@@ -98,4 +98,60 @@ export class AdministrativeProceduresFormSubmissionService {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     return uuidRegex.test(uuid)
   }
+
+  /**
+   * Get all form submissions for a student
+   * @param studentId Student ID
+   * @returns List of form submissions
+   */
+  async getSubmissionsByStudentId(studentId: string) {
+    if (!this.isValidUUID(studentId)) {
+      throw new BadRequestException(`Invalid student ID format: ${studentId}`)
+    }
+
+    try {
+      const submissions = await this._prisma.administrativeProceduresFormSubmission.findMany({
+        where: { studentId },
+        include: {
+          form: true,
+          student: true,
+          handleBy: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      return submissions
+    } catch (error) {
+      console.error('Error fetching student submissions:', error)
+      throw new BadRequestException('Error fetching student form submissions')
+    }
+  }
+
+  /**
+   * Get all submissions for a specific form
+   * @param formId Form ID
+   * @returns List of form submissions
+   */
+  async getSubmissionsByFormId(formId: string) {
+    if (!this.isValidUUID(formId)) {
+      throw new BadRequestException(`Invalid form ID format: ${formId}`)
+    }
+
+    try {
+      const submissions = await this._prisma.administrativeProceduresFormSubmission.findMany({
+        where: { formId },
+        include: {
+          form: true,
+          student: true,
+          handleBy: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      return submissions
+    } catch (error) {
+      console.error('Error fetching form submissions:', error)
+      throw new BadRequestException('Error fetching form submissions')
+    }
+  }
 }

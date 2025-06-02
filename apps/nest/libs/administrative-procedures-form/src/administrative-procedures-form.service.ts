@@ -40,4 +40,23 @@ export class AdministrativeProceduresFormService {
       throw new BadRequestException('Error creating form')
     }
   }
+
+  async getFormById(id: string) {
+    try {
+      const form = await this._prisma.administrativeProceduresForm.findUnique({
+        where: { id },
+      })
+
+      if (!form) {
+        throw new BadRequestException(`Form with id ${id} not found`)
+      }
+
+      return th.toInstanceSafe(AdministrativeProceduresFormEntity, form)
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException('Error fetching form')
+    }
+  }
 }
