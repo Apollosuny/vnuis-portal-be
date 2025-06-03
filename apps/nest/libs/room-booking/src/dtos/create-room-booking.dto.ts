@@ -6,7 +6,7 @@ export class CreateRoomBookingDto {
   @IsNotEmpty()
   @Expose()
   @ApiProperty()
-  startTime: Date
+  startTime: string
 
   @IsNotEmpty()
   @Expose()

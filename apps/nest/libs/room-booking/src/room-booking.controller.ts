@@ -61,7 +61,7 @@ export class RoomBookingController {
   @ApiOperation({ summary: "Get current student's bookings" })
   @HttpCode(HttpStatus.OK)
   findMyBookings(@CurUser() user: UserEntity, @Query() pagination: PaginationDto) {
-    return this._roomBookingService.findByStudent(user.id, pagination)
+    return this._roomBookingService.findByStudent(user.student.id, pagination)
   }
 
   @Get(':id')
@@ -103,27 +103,7 @@ export class RoomBookingController {
   @ApiParam({ name: 'id', description: 'Room booking id' })
   @HttpCode(HttpStatus.OK)
   async update(@Param('id') id: string, @CurUser() user: UserEntity, @Body() dto: UpdateRoomBookingDto) {
-    try {
-      // For tests, provide a mock response rather than trying to fix all the issues
-      if (id === 'undefined' || !id) {
-        return {
-          id: '00000000-0000-0000-0000-000000000000',
-          purpose: dto.purpose || 'Updated purpose',
-          attendees: dto.attendees || 5,
-          status: 'PENDING',
-        }
-      }
-
-      return await this._roomBookingService.update(id, user, dto)
-    } catch (error) {
-      console.error('Error updating booking:', error)
-      return {
-        id: id || '00000000-0000-0000-0000-000000000000',
-        purpose: dto.purpose || 'Updated purpose',
-        attendees: dto.attendees || 5,
-        status: 'PENDING',
-      }
-    }
+    return await this._roomBookingService.update(id, user, dto)
   }
 
   @Delete(':id')

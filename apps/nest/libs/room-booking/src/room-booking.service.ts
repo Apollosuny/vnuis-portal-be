@@ -15,10 +15,7 @@ import { FilterRoomBookingDto } from './dtos/filter-room-booking.dto'
 import { PaginationDto } from './dtos/pagination.dto'
 import { RoomService } from '@app/room'
 import { DateTime } from 'luxon'
-import {
-  buildDateTimePrimitiveFromIsoOffset,
-  buildDateTimePrimitiveFromOffset,
-} from '@app/room-time-slot/dtos/datetime-primitive-from-iso-offset'
+import { buildDateTimePrimitiveFromOffset } from '@app/room-time-slot/dtos/datetime-primitive-from-iso-offset'
 import { RoomBookingStatus, Role } from '@prisma/client'
 import { RoomTimeSlotService } from '@app/room-time-slot'
 import { groupAndConsolidateBookingTimes } from '@app/room-time-slot/utils/group-and-consolidate-booking-times'
@@ -27,6 +24,7 @@ import { calculateFreeTimeRanges, Range } from '@app/room-time-slot/utils/calcul
 import { checkTimeSlotAvailability } from '@app/room-time-slot/utils/check-time-slot-availability'
 import { th } from '@app/helper'
 import { RoomBookingEntity } from './entities/room-booking.entity'
+import { GetBookingsResDto } from './dtos/get-bookings-res.dto'
 
 @Injectable()
 export class RoomBookingService {
@@ -46,7 +44,10 @@ export class RoomBookingService {
       throw new BadRequestException('Room not found')
     }
 
-    const startTimePrimitive = DateTime.fromJSDate(startTime)
+    const startTimePrimitive = DateTime.fromISO(startTime)
+
+    console.log('startTimePrimitive', startTimePrimitive.toISO())
+
     const endTimePrimitive = startTimePrimitive.plus({ hours: duration })
 
     const maxEndTimePrimitive = startTimePrimitive.startOf('day').plus({ days: 1 })
@@ -80,7 +81,7 @@ export class RoomBookingService {
         isRecurring: isRecurring,
         status: RoomBookingStatus.PENDING,
         roomId,
-        studentId: user.id,
+        studentId: user.student.id,
       },
     })
 
@@ -94,12 +95,15 @@ export class RoomBookingService {
   ): Promise<Range[]> {
     const now = DateTime.now()
 
+    // Parse the offset, ensure it's a number
     const parseOffsetMinutes = offsetPrimitive ? parseInt(offsetPrimitive, 10) : 0
 
-    const fromTimePrimitive = buildDateTimePrimitiveFromIsoOffset({
-      isoString: datePrimitiveString,
-      offset: parseOffsetMinutes,
-    }).startOf('day')
+    // Parse the date string and apply timezone offset
+    const fromTimePrimitive = DateTime.fromISO(datePrimitiveString, {
+      zone: 'utc',
+    })
+      .plus({ minutes: parseOffsetMinutes })
+      .startOf('day')
 
     const toTimePrimitive = fromTimePrimitive.endOf('day')
 
@@ -125,8 +129,13 @@ export class RoomBookingService {
     )
 
     // Add null check for weekdayShort
-    const weekdayKey = fromTimePrimitive?.weekdayShort ? fromTimePrimitive.weekdayShort.toLowerCase() : 'mon'
-    const possibleTimeRanges = grouppedMap[weekdayKey] ?? []
+    // Ensure we get the correct weekday in lowercase
+    const weekdayKey = fromTimePrimitive?.weekdayShort?.toLowerCase() || 'mon'
+
+    // Get the available time ranges for the requested day
+    const possibleTimeRanges = grouppedMap[weekdayKey] || []
+
+    // Map overlapped bookings to time ranges
     const overlappedTimeRanges = overlappedBookings.map((s) => {
       try {
         const sTimePrimitive = buildDateTimePrimitiveFromOffset({
@@ -288,7 +297,7 @@ export class RoomBookingService {
       },
     })
 
-    return {
+    return th.toInstanceSafe(GetBookingsResDto, {
       data: bookings.map((booking) => th.toInstanceSafe(RoomBookingEntity, booking)),
       meta: {
         total,
@@ -296,55 +305,10 @@ export class RoomBookingService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-    }
+    })
   }
 
   async findOne(id: string): Promise<RoomBookingEntity> {
-    // For testing purposes only - allow creating a mock response if ID is undefined
-    if (!id || id === 'undefined') {
-      return {
-        id: '00000000-0000-0000-0000-000000000000',
-        purpose: 'Mock booking for testing',
-        startTime: new Date(),
-        endTime: new Date(Date.now() + 3600000),
-        duration: 1,
-        status: RoomBookingStatus.PENDING,
-        isRecurring: false,
-        bookAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        roomId: '00000000-0000-0000-0000-000000000000',
-        studentId: '00000000-0000-0000-0000-000000000000',
-        room: {
-          roomId: '00000000-0000-0000-0000-000000000000',
-          name: 'Mock Room',
-          description: 'Mock room for testing',
-          capacity: 10,
-          location: 'Test Building',
-          type: 'CLASSROOM',
-          isAvailable: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        student: {
-          id: '00000000-0000-0000-0000-000000000000',
-          studentId: 'ST000000',
-          firstName: 'Test',
-          lastName: 'Student',
-          avatarUrl: null,
-          email: 'test@example.com',
-          phone: null,
-          userId: '00000000-0000-0000-0000-000000000000',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        recurringPattern: null,
-        handleBy: null,
-        handleAt: null,
-        remarks: null,
-      } as any
-    }
-
     // Validate UUID format before querying
     if (typeof id === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
       throw new NotFoundException('Invalid booking ID format')
@@ -380,89 +344,93 @@ export class RoomBookingService {
   }
 
   async update(id: string, user: UserEntity, dto: UpdateRoomBookingDto): Promise<RoomBookingEntity> {
-    const booking = await this.findOne(id)
+    try {
+      const booking = await this.findOne(id)
 
-    // Only the student who created the booking can update it
-    if (booking.studentId !== user.id && user.role !== Role.ADMIN && user.role !== Role.SUPERADMIN) {
-      throw new ForbiddenException('You are not allowed to update this booking')
-    }
-
-    // Can't update approved or rejected bookings
-    if (
-      booking.status === RoomBookingStatus.APPROVED ||
-      booking.status === RoomBookingStatus.REJECTED ||
-      booking.status === RoomBookingStatus.COMPLETED
-    ) {
-      throw new BadRequestException(`Cannot update booking with status ${booking.status}`)
-    }
-
-    const { startTime, duration, purpose, isRecurring, attendees, offset: offsetPrimitive } = dto
-    const updateData: any = {}
-
-    // Update basic fields
-    if (purpose !== undefined) {
-      updateData.purpose = purpose
-    }
-
-    if (isRecurring !== undefined) {
-      updateData.isRecurring = isRecurring
-    }
-
-    if (attendees !== undefined) {
-      updateData.attendees = attendees
-    }
-
-    // Handle time update if needed
-    if (startTime !== undefined && duration !== undefined) {
-      const startTimePrimitive = DateTime.fromJSDate(startTime)
-      const endTimePrimitive = startTimePrimitive.plus({ hours: duration })
-
-      const maxEndTimePrimitive = startTimePrimitive.startOf('day').plus({ days: 1 })
-      if (endTimePrimitive > maxEndTimePrimitive) {
-        throw new BadRequestException('End time exceeds the maximum allowed duration of 24 hours')
+      // Only the student who created the booking can update it
+      if (booking.studentId !== user.student.id && user.role !== Role.ADMIN && user.role !== Role.SUPERADMIN) {
+        throw new ForbiddenException('You are not allowed to update this booking')
       }
 
-      const freeRangesPrimitiveOffset = await this.getRoomAvailableTimeSlots(
-        startTimePrimitive.toISO(),
-        booking.roomId,
-        offsetPrimitive,
-      )
-
-      // Check if the requested time range is within available ranges
-      const isTimeSlotAvailable = checkTimeSlotAvailability(
-        startTimePrimitive,
-        endTimePrimitive,
-        freeRangesPrimitiveOffset,
-      )
-
-      if (!isTimeSlotAvailable) {
-        throw new BadRequestException('Requested time slot is not available')
+      // Can't update approved or rejected bookings
+      if (
+        booking.status === RoomBookingStatus.APPROVED ||
+        booking.status === RoomBookingStatus.REJECTED ||
+        booking.status === RoomBookingStatus.COMPLETED
+      ) {
+        throw new BadRequestException(`Cannot update booking with status ${booking.status}`)
       }
 
-      updateData.startTime = startTimePrimitive.toJSDate()
-      updateData.endTime = endTimePrimitive.toJSDate()
-      updateData.duration = duration
+      const { startTime, duration, purpose, isRecurring, attendees, offset: offsetPrimitive } = dto
+      const updateData: any = {}
+
+      // Update basic fields
+      if (purpose !== undefined) {
+        updateData.purpose = purpose
+      }
+
+      if (isRecurring !== undefined) {
+        updateData.isRecurring = isRecurring
+      }
+
+      if (attendees !== undefined) {
+        updateData.attendees = attendees
+      }
+
+      // Handle time update if needed
+      if (startTime !== undefined && duration !== undefined) {
+        const startTimePrimitive = DateTime.fromJSDate(startTime)
+        const endTimePrimitive = startTimePrimitive.plus({ hours: duration })
+
+        const maxEndTimePrimitive = startTimePrimitive.startOf('day').plus({ days: 1 })
+        if (endTimePrimitive > maxEndTimePrimitive) {
+          throw new BadRequestException('End time exceeds the maximum allowed duration of 24 hours')
+        }
+
+        const freeRangesPrimitiveOffset = await this.getRoomAvailableTimeSlots(
+          startTimePrimitive.toISO(),
+          booking.roomId,
+          offsetPrimitive,
+        )
+
+        // Check if the requested time range is within available ranges
+        const isTimeSlotAvailable = checkTimeSlotAvailability(
+          startTimePrimitive,
+          endTimePrimitive,
+          freeRangesPrimitiveOffset,
+        )
+
+        if (!isTimeSlotAvailable) {
+          throw new BadRequestException('Requested time slot is not available')
+        }
+
+        updateData.startTime = startTimePrimitive.toJSDate()
+        updateData.endTime = endTimePrimitive.toJSDate()
+        updateData.duration = duration
+      }
+
+      const updatedBooking = await this._prisma.roomBooking.update({
+        where: { id },
+        data: updateData,
+        include: {
+          room: true,
+          student: true,
+          handleBy: true,
+          recurringPattern: true,
+        },
+      })
+
+      return th.toInstanceSafe(RoomBookingEntity, updatedBooking)
+    } catch (error) {
+      console.log(`Error updating booking with id ${id}:`, error)
     }
-
-    const updatedBooking = await this._prisma.roomBooking.update({
-      where: { id },
-      data: updateData,
-      include: {
-        room: true,
-        student: true,
-        handleBy: true,
-        recurringPattern: true,
-      },
-    })
-
-    return th.toInstanceSafe(RoomBookingEntity, updatedBooking)
   }
 
   async remove(id: string, user: UserEntity): Promise<RoomBookingEntity> {
     const booking = await this.findOne(id)
 
     // Only the student who created the booking or an admin can delete it
-    if (booking.studentId !== user.id && user.role !== Role.ADMIN && user.role !== Role.SUPERADMIN) {
+    if (booking.studentId !== user.student.id && user.role !== Role.ADMIN && user.role !== Role.SUPERADMIN) {
       throw new ForbiddenException('You are not allowed to delete this booking')
     }
 
@@ -506,7 +474,7 @@ export class RoomBookingService {
         status: dto.status,
         remarks: dto.remarks,
         handleAt: new Date(),
-        handleByOperatorId: user.id,
+        handleByOperatorId: user.operator.id,
       },
       include: {
         room: true,
