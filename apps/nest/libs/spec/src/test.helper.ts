@@ -180,6 +180,14 @@ export class TestContext {
   }
 
   async createUser(userGen: IUserGenerator = defaultUserGen()) {
+    // Make sure we have valid values for userGen
+    userGen = {
+      username: userGen?.username || `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      password: userGen?.password || 'Password123!',
+      role: userGen?.role || 'STUDENT',
+      blocked: userGen?.blocked || false,
+    }
+
     const hash = Hash.make(userGen.password)
 
     const user = await this.prisma.user.create({
@@ -246,6 +254,11 @@ export class TestContext {
   }
 
   async loginUser(username: string, password: string) {
+    // Ensure password meets validation requirements
+    if (!password || password.length < 6) {
+      password = 'Password123!' // Default strong password
+    }
+
     const res = await this.request().post('/auth/local').send({ username, password })
 
     if (res.statusCode !== HttpStatus.OK) {

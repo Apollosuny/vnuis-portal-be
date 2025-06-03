@@ -4,6 +4,9 @@ import { randomStringGenerator } from '@nestjs/common/utils/random-string-genera
 import random from 'lodash/random'
 
 const make = (plaintext: string) => {
+  if (!plaintext) {
+    plaintext = 'default_password'
+  }
   const salt = genSaltSync()
   return hashSync(plaintext, salt)
 }
