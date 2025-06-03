@@ -46,6 +46,8 @@ expect.extend({
   toBeCreated: (res: request.Response) => buildExpectStatus(res, HttpStatus.CREATED),
   toBe404: (res: request.Response) => buildExpectStatus(res, HttpStatus.NOT_FOUND),
   toBeUnauthorized: (res: request.Response) => buildExpectStatus(res, HttpStatus.UNAUTHORIZED),
+  toBeForbidden: (res: request.Response) => buildExpectStatus(res, HttpStatus.FORBIDDEN),
+  toBeNoContent: (res: request.Response) => buildExpectStatus(res, HttpStatus.NO_CONTENT),
 })
 
 declare global {
@@ -57,6 +59,8 @@ declare global {
       toBe404(): R
       toBeBad(message: string | RegExp): R
       toBeUnauthorized(): R
+      toBeForbidden(): R
+      toBeNoContent(): R
     }
   }
 }
