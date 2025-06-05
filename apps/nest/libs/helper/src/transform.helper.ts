@@ -4,11 +4,53 @@ import { defaultValidatorPipe } from './class.validator'
 
 const toInstanceSafe = function <T, V>(cls: ClassConstructor<T>, plain: V) {
   try {
-    return plainToInstance(cls, fixDecimal(plain), { strategy: 'excludeAll' })
+    // Pre-process object to handle special fields like JSON
+    const processedPlain = preProcessObject(plain)
+    return plainToInstance(cls, fixDecimal(processedPlain), { strategy: 'excludeAll' })
   } catch (error) {
     console.error('toInstanceSafe', error)
     throw error
   }
+}
+
+// Pre-process object to handle special fields
+function preProcessObject(obj: any): any {
+  if (!obj) return obj
+
+  // For arrays, process each item
+  if (Array.isArray(obj)) {
+    return obj.map((item) => preProcessObject(item))
+  }
+
+  // If not an object or is a Date, return as is
+  if (typeof obj !== 'object' || obj instanceof Date) {
+    return obj
+  }
+
+  // Create a new object with processed properties
+  const processed = { ...obj }
+
+  // Special handling for specific known fields
+  if ('result' in processed && processed.result) {
+    // Ensure result is always a proper object
+    if (typeof processed.result === 'string') {
+      try {
+        processed.result = JSON.parse(processed.result)
+      } catch (e) {
+        // Keep as is if parsing fails
+        console.error('Failed to parse result field as JSON:', e)
+      }
+    }
+  }
+
+  // Process nested objects
+  Object.keys(processed).forEach((key) => {
+    if (processed[key] && typeof processed[key] === 'object') {
+      processed[key] = preProcessObject(processed[key])
+    }
+  })
+
+  return processed
 }
 
 const toInstanceUnsafe = function <T, V>(cls: ClassConstructor<T>, plain: V) {

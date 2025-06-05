@@ -17,6 +17,7 @@ import { SubmitDto } from './dtos/submit.dto'
 import { JwtGuard } from '@app/auth/guards/jwt.guard'
 import { AdministrativeProceduresFormSubmissionEntity } from './entities/administrative-procedures-form-submission.entity'
 import { th } from '@app/helper'
+import { TransformerExposeAll } from '@app/core/decorators/transformer-expose-all.decorator'
 
 @ApiTags('official-forms-submissions')
 @Controller('official-forms-submissions')
@@ -75,6 +76,46 @@ export class AdministrativeProceduresFormSubmissionController {
     } catch (error) {
       console.error('Error transforming submissions:', error)
       return submissions
+    }
+  }
+
+  @Get(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity })
+  @HttpCode(HttpStatus.OK)
+  @TransformerExposeAll()
+  async getSubmissionById(@CurUser() user: UserEntity, @Param('id') id: string) {
+    const submission = await this._administrativeProceduresFormSubmissionService.getSubmissionById(id, {
+      includeForm: true, // Include the related form data
+    })
+
+    // Check if the user has permission to view this submission
+    if (
+      user.role !== 'ADMIN' &&
+      user.role !== 'SUPERADMIN' &&
+      user.role === 'STUDENT' &&
+      user.student.id !== submission.studentId
+    ) {
+      throw new UnauthorizedException('You do not have permission to access this submission')
+    }
+
+    try {
+      // Make sure the result field is properly handled before transformation
+      if (submission.result && typeof submission.result === 'object') {
+        // Create a clean copy to avoid mutating the original object
+        const submissionWithProcessedResult = {
+          ...submission,
+          result: { ...submission.result }, // Ensure result is a proper object
+        }
+
+        return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submissionWithProcessedResult)
+      }
+
+      return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submission)
+    } catch (error) {
+      console.error('Error transforming submission:', error)
+      return submission
     }
   }
 }

@@ -12,9 +12,6 @@ export class AdministrativeProceduresFormSubmissionService {
 
   async submit(user: UserEntity, formId: string, dto: SubmitDto) {
     try {
-      console.log('Attempting to find form with ID:', formId)
-      console.log('ID type:', typeof formId)
-
       // Validate UUID format before querying
       if (!this.isValidUUID(formId)) {
         throw new NotFoundException(`Form with id ${formId} not found`)
@@ -38,8 +35,6 @@ export class AdministrativeProceduresFormSubmissionService {
         throw new BadRequestException('Only students can submit forms')
       }
 
-      console.log('result', dto.result)
-
       // Check if result is provided
       if (!dto.result || Object.keys(dto.result).length === 0) {
         throw new BadRequestException('result is required')
@@ -51,9 +46,12 @@ export class AdministrativeProceduresFormSubmissionService {
         where: { id: formId },
       })
 
+      // Ensure result is a proper JSON object before storing
+      const resultData = typeof dto.result === 'string' ? JSON.parse(dto.result) : dto.result
+
       const submission = await this._prisma.administrativeProceduresFormSubmission.create({
         data: {
-          result: dto.result as any, // Cast to any to help with Prisma type issues
+          result: resultData, // Store as a proper JSON object
           status: FormSubmissionStatus.PENDING,
           form: {
             connect: { id: formId },
@@ -155,6 +153,65 @@ export class AdministrativeProceduresFormSubmissionService {
     } catch (error) {
       console.error('Error fetching form submissions:', error)
       throw new BadRequestException('Error fetching form submissions')
+    }
+  }
+
+  /**
+   * Get a specific form submission by ID
+   * @param id Submission ID
+   * @param options Options to customize the query
+   * @returns The form submission
+   */
+  async getSubmissionById(id: string, options?: { includeForm?: boolean }) {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException(`Invalid submission ID format: ${id}`)
+    }
+
+    try {
+      const submission = await this._prisma.administrativeProceduresFormSubmission.findUnique({
+        where: { id },
+        include: {
+          // Always include student and operator
+          student: true,
+          handleBy: true,
+          // Conditionally include form
+          form: options?.includeForm === true,
+        },
+      })
+
+      if (!submission) {
+        throw new NotFoundException(`Form submission with id ${id} not found`)
+      }
+
+      // Ensure the result field is properly processed
+      if (submission.result) {
+        try {
+          // If result is a string (serialized JSON), parse it
+          if (typeof submission.result === 'string') {
+            submission.result = JSON.parse(submission.result)
+          }
+
+          // If result is already an object, ensure it's properly structured
+          if (typeof submission.result === 'object') {
+            // Prisma sometimes returns an empty object for JSON fields
+            // Make sure it's a proper object with question ID keys
+            if (Object.keys(submission.result).length === 0) {
+              console.warn('Empty result object detected, checking for potential data loss')
+            }
+          }
+        } catch (parseError) {
+          console.error('Error processing submission result:', parseError)
+          // Keep the original result if parsing fails
+        }
+      }
+
+      return submission
+    } catch (error) {
+      console.error('Error fetching submission:', error)
+      if (error instanceof NotFoundException) {
+        throw error
+      }
+      throw new BadRequestException('Error fetching form submission details')
     }
   }
 }
