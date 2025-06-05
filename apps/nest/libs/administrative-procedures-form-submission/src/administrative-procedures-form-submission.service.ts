@@ -2,11 +2,15 @@ import { UserEntity } from '@app/user/entities/user.entity'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from 'nestjs-prisma'
 import { FormSubmissionStatus } from '@prisma/client'
+import { SubmitDto } from './dtos/submit.dto'
+import { AdministrativeProceduresFormSubmissionEntity } from './entities/administrative-procedures-form-submission.entity'
+import { th } from '@app/helper'
 
 @Injectable()
 export class AdministrativeProceduresFormSubmissionService {
   constructor(private readonly _prisma: PrismaService) {}
-  async submit(user: UserEntity, formId: string, result: Record<string, any>) {
+
+  async submit(user: UserEntity, formId: string, dto: SubmitDto) {
     try {
       console.log('Attempting to find form with ID:', formId)
       console.log('ID type:', typeof formId)
@@ -34,8 +38,10 @@ export class AdministrativeProceduresFormSubmissionService {
         throw new BadRequestException('Only students can submit forms')
       }
 
+      console.log('result', dto.result)
+
       // Check if result is provided
-      if (!result || Object.keys(result).length === 0) {
+      if (!dto.result || Object.keys(dto.result).length === 0) {
         throw new BadRequestException('result is required')
       }
 
@@ -47,7 +53,7 @@ export class AdministrativeProceduresFormSubmissionService {
 
       const submission = await this._prisma.administrativeProceduresFormSubmission.create({
         data: {
-          result: result as any, // Cast to any to help with Prisma type issues
+          result: dto.result as any, // Cast to any to help with Prisma type issues
           status: FormSubmissionStatus.PENDING,
           form: {
             connect: { id: formId },
@@ -76,10 +82,7 @@ export class AdministrativeProceduresFormSubmissionService {
         handleByOperatorId: submission.handleByOperatorId,
       }
 
-      // Debug the response
-      console.log('Submission created successfully:', responseData)
-
-      return responseData
+      return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, responseData)
     } catch (error) {
       console.log('Error submitting form:', error)
       if (error instanceof NotFoundException || error instanceof BadRequestException) {

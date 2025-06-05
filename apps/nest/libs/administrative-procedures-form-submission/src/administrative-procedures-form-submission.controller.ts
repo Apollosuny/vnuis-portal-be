@@ -30,17 +30,8 @@ export class AdministrativeProceduresFormSubmissionController {
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity })
   @HttpCode(HttpStatus.CREATED)
-  async submit(@CurUser() user: UserEntity, @Param('formId') formId: string, @Body() dto: SubmitDto) {
-    const submission = await this._administrativeProceduresFormSubmissionService.submit(user, formId, dto.result)
-    try {
-      console.log('Raw submission data:', submission)
-      const transformedData = th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submission)
-      console.log('Transformed data:', transformedData)
-      return transformedData
-    } catch (error) {
-      console.error('Error transforming submission:', error)
-      return submission // Fall back to returning raw data if transformation fails
-    }
+  async submit(@CurUser() user: UserEntity, @Param('formId') formId: string, @Body() dto: any) {
+    return await this._administrativeProceduresFormSubmissionService.submit(user, formId, dto)
   }
 
   @Get('user')
