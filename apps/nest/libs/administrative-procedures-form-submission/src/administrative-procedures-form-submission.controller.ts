@@ -8,22 +8,26 @@ import {
   Post,
   UnauthorizedException,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import { AdministrativeProceduresFormSubmissionService } from './administrative-procedures-form-submission.service'
 import { CurUser } from '@app/core/decorators/user.decorator'
 import { UserEntity } from '@app/user/entities/user.entity'
+import { PrismaService } from 'nestjs-prisma'
 import { SubmitDto } from './dtos/submit.dto'
 import { JwtGuard } from '@app/auth/guards/jwt.guard'
 import { AdministrativeProceduresFormSubmissionEntity } from './entities/administrative-procedures-form-submission.entity'
 import { th } from '@app/helper'
 import { TransformerExposeAll } from '@app/core/decorators/transformer-expose-all.decorator'
+import { FormSubmissionStatus } from '@prisma/client'
 
 @ApiTags('official-forms-submissions')
 @Controller('official-forms-submissions')
 export class AdministrativeProceduresFormSubmissionController {
   constructor(
     private readonly _administrativeProceduresFormSubmissionService: AdministrativeProceduresFormSubmissionService,
+    private readonly _prisma: PrismaService,
   ) {}
 
   @Post(':formId/submit')
@@ -116,6 +120,93 @@ export class AdministrativeProceduresFormSubmissionController {
     } catch (error) {
       console.error('Error transforming submission:', error)
       return submission
+    }
+  }
+
+  @Post(':id/approve')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity })
+  @HttpCode(HttpStatus.OK)
+  @TransformerExposeAll()
+  async approveSubmission(@CurUser() user: UserEntity, @Param('id') id: string, @Body() dto: { remarks?: string }) {
+    // Only admin users can approve submissions
+    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
+      throw new UnauthorizedException('Only administrators can approve form submissions')
+    }
+
+    if (!user.operator) {
+      throw new BadRequestException('User does not have operator permissions')
+    }
+
+    try {
+      const updatedSubmission = await this._prisma.administrativeProceduresFormSubmission.update({
+        where: { id },
+        data: {
+          status: FormSubmissionStatus.APPROVED,
+          remarks: dto.remarks || null,
+          handleAt: new Date(),
+          handleBy: {
+            connect: { id: user.operator.id },
+          },
+        },
+        include: {
+          form: true,
+          student: true,
+          handleBy: true,
+        },
+      })
+
+      return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, updatedSubmission)
+    } catch (error) {
+      console.error('Error approving submission:', error)
+      throw new BadRequestException(`Failed to approve submission: ${error.message}`)
+    }
+  }
+
+  @Post(':id/reject')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity })
+  @HttpCode(HttpStatus.OK)
+  @TransformerExposeAll()
+  async rejectSubmission(@CurUser() user: UserEntity, @Param('id') id: string, @Body() dto: { remarks: string }) {
+    // Only admin users can reject submissions
+    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
+      throw new UnauthorizedException('Only administrators can reject form submissions')
+    }
+
+    if (!user.operator) {
+      throw new BadRequestException('User does not have operator permissions')
+    }
+
+    // Remarks are required for rejection
+    if (!dto.remarks) {
+      throw new BadRequestException('Remarks are required when rejecting a submission')
+    }
+
+    try {
+      const updatedSubmission = await this._prisma.administrativeProceduresFormSubmission.update({
+        where: { id },
+        data: {
+          status: FormSubmissionStatus.REJECTED,
+          remarks: dto.remarks,
+          handleAt: new Date(),
+          handleBy: {
+            connect: { id: user.operator.id },
+          },
+        },
+        include: {
+          form: true,
+          student: true,
+          handleBy: true,
+        },
+      })
+
+      return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, updatedSubmission)
+    } catch (error) {
+      console.error('Error rejecting submission:', error)
+      throw new BadRequestException(`Failed to reject submission: ${error.message}`)
     }
   }
 }

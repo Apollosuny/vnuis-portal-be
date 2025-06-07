@@ -214,4 +214,118 @@ export class AdministrativeProceduresFormSubmissionService {
       throw new BadRequestException('Error fetching form submission details')
     }
   }
+
+  /**
+   * Approve a form submission
+   * @param id Submission ID
+   * @param operatorId ID of the operator approving the submission
+   * @param remarks Optional remarks for the approval
+   * @returns The updated form submission
+   */
+  async approveSubmission(id: string, operatorId: string, remarks?: string) {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException(`Invalid submission ID format: ${id}`)
+    }
+
+    try {
+      const submission = await this._prisma.administrativeProceduresFormSubmission.findUnique({
+        where: { id },
+      })
+
+      if (!submission) {
+        throw new NotFoundException(`Form submission with id ${id} not found`)
+      }
+
+      // Don't approve if not in pending state
+      if (submission.status !== FormSubmissionStatus.PENDING) {
+        throw new BadRequestException(`Form submission with id ${id} is not in pending state`)
+      }
+
+      const updatedSubmission = await this._prisma.administrativeProceduresFormSubmission.update({
+        where: { id },
+        data: {
+          status: FormSubmissionStatus.APPROVED,
+          remarks: remarks || null,
+          handleAt: new Date(),
+          handleByOperatorId: operatorId,
+        },
+        include: {
+          form: true,
+          student: {
+            include: {
+              user: true,
+            },
+          },
+          handleBy: true,
+        },
+      })
+
+      return updatedSubmission
+    } catch (error) {
+      console.error('Error approving submission:', error)
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException(`Failed to approve submission: ${error.message}`)
+    }
+  }
+
+  /**
+   * Reject a form submission
+   * @param id Submission ID
+   * @param operatorId ID of the operator rejecting the submission
+   * @param remarks Rejection remarks (required)
+   * @returns The updated form submission
+   */
+  async rejectSubmission(id: string, operatorId: string, remarks: string) {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException(`Invalid submission ID format: ${id}`)
+    }
+
+    if (!remarks) {
+      throw new BadRequestException('Remarks are required when rejecting a submission')
+    }
+
+    try {
+      const submission = await this._prisma.administrativeProceduresFormSubmission.findUnique({
+        where: { id },
+      })
+
+      if (!submission) {
+        throw new NotFoundException(`Form submission with id ${id} not found`)
+      }
+
+      // Don't reject if not in pending state
+      if (submission.status !== FormSubmissionStatus.PENDING) {
+        throw new BadRequestException(`Form submission with id ${id} is not in pending state`)
+      }
+
+      const updatedSubmission = await this._prisma.administrativeProceduresFormSubmission.update({
+        where: { id },
+        data: {
+          status: FormSubmissionStatus.REJECTED,
+          remarks: remarks,
+          handleAt: new Date(),
+          handleByOperatorId: operatorId,
+        },
+        include: {
+          form: true,
+          student: {
+            include: {
+              user: true,
+            },
+          },
+          handleBy: true,
+        },
+      })
+
+      return updatedSubmission
+    } catch (error) {
+      console.error('Error rejecting submission:', error)
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException(`Failed to reject submission: ${error.message}`)
+    }
+  }
 }
