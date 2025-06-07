@@ -30,6 +30,27 @@ export class AdministrativeProceduresFormSubmissionController {
     private readonly _prisma: PrismaService,
   ) {}
 
+  @Get('all')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity, isArray: true })
+  @HttpCode(HttpStatus.OK)
+  async getAllSubmissions(@CurUser() user: UserEntity) {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
+      throw new UnauthorizedException('Only administrators can access all form submissions')
+    }
+
+    const submissions = await this._administrativeProceduresFormSubmissionService.getAllSubmissions()
+    try {
+      return submissions.map((submission) =>
+        th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submission),
+      )
+    } catch (error) {
+      console.error('Error transforming submissions:', error)
+      return submissions
+    }
+  }
+
   @Post(':formId/submit')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()

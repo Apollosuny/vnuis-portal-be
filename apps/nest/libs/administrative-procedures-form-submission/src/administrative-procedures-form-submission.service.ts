@@ -129,6 +129,32 @@ export class AdministrativeProceduresFormSubmissionService {
   }
 
   /**
+   * Get all form submissions across all forms
+   * @returns List of all form submissions
+   */
+  async getAllSubmissions() {
+    try {
+      const submissions = await this._prisma.administrativeProceduresFormSubmission.findMany({
+        include: {
+          form: true,
+          student: {
+            include: {
+              user: true,
+            },
+          },
+          handleBy: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      return submissions
+    } catch (error) {
+      console.error('Error fetching all form submissions:', error)
+      throw new BadRequestException('Error fetching all form submissions')
+    }
+  }
+
+  /**
    * Get all submissions for a specific form
    * @param formId Form ID
    * @returns List of form submissions
@@ -143,7 +169,11 @@ export class AdministrativeProceduresFormSubmissionService {
         where: { formId },
         include: {
           form: true,
-          student: true,
+          student: {
+            include: {
+              user: true,
+            },
+          },
           handleBy: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -171,8 +201,12 @@ export class AdministrativeProceduresFormSubmissionService {
       const submission = await this._prisma.administrativeProceduresFormSubmission.findUnique({
         where: { id },
         include: {
-          // Always include student and operator
-          student: true,
+          // Always include student (with user data) and operator
+          student: {
+            include: {
+              user: true,
+            },
+          },
           handleBy: true,
           // Conditionally include form
           form: options?.includeForm === true,
