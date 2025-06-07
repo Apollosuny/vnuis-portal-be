@@ -66,7 +66,7 @@ export class EventController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => EventEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   createEvent(@Body() createEventDto: CreateEventDto, @CurUser() user: UserEntity) {
     return this.eventService.createEvent(createEventDto, user)
   }
@@ -75,7 +75,7 @@ export class EventController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => EventEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   updateEvent(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto, @CurUser() user: User) {
     return this.eventService.updateEvent(id, updateEventDto, user)
   }
@@ -84,7 +84,7 @@ export class EventController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => EventEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   deleteEvent(@Param('id') id: string, @CurUser() user: User) {
     return this.eventService.deleteEvent(id, user)
   }
@@ -93,7 +93,7 @@ export class EventController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => EventEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   publishEvent(@Param('id') id: string, @CurUser() user: User) {
     return this.eventService.publishEvent(id, user)
   }
@@ -102,7 +102,7 @@ export class EventController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => EventEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   unpublishEvent(@Param('id') id: string, @CurUser() user: User) {
     return this.eventService.unpublishEvent(id, user)
   }
@@ -119,7 +119,7 @@ export class EventController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => EventRegistrationEntity })
   @UseGuards(JwtGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   updateRegistrationStatus(
     @Param('id') id: string,
     @Body() updateRegistrationStatusDto: UpdateRegistrationStatusDto,
