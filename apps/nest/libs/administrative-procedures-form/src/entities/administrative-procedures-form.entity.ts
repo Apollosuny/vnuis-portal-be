@@ -51,4 +51,8 @@ export class AdministrativeProceduresFormEntity {
   @Expose()
   @ApiProperty()
   createdByOperatorId: string
+
+  @Expose()
+  @ApiProperty()
+  slug: string
 }
