@@ -26,25 +26,25 @@ export class RoomTimeSlotEntity implements RoomTimeSlot {
   endTime: Date
 
   @Expose()
-  @ApiProperty({ description: 'Formatted start time (HH:MM)' })
+  @ApiProperty({ description: 'Formatted start time (HH:MM) in UTC' })
   @Transform(({ obj }) => {
     const date = obj.startTime instanceof Date ? obj.startTime : new Date(obj.startTime)
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`
   })
   get formattedStartTime(): string {
     const date = this.startTime instanceof Date ? this.startTime : new Date(this.startTime)
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`
   }
 
   @Expose()
-  @ApiProperty({ description: 'Formatted end time (HH:MM)' })
+  @ApiProperty({ description: 'Formatted end time (HH:MM) in UTC' })
   @Transform(({ obj }) => {
     const date = obj.endTime instanceof Date ? obj.endTime : new Date(obj.endTime)
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`
   })
   get formattedEndTime(): string {
     const date = this.endTime instanceof Date ? this.endTime : new Date(this.endTime)
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+    return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`
   }
 
   @Expose()

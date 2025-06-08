@@ -79,7 +79,7 @@ export class RoomTimeSlotService {
         }
       })
 
-      // Create reference date objects for database storage with today's date
+      // Create reference date objects for database storage with today's date in UTC
       // but with the specified times
       const today = new Date()
 
@@ -89,11 +89,14 @@ export class RoomTimeSlotService {
           const [startHour, startMinute] = slot.startTime.split(':').map(Number)
           const [endHour, endMinute] = slot.endTime.split(':').map(Number)
 
-          const startDate = new Date(today)
-          startDate.setHours(startHour, startMinute, 0, 0)
+          // Create dates in UTC
+          const startDate = new Date(
+            Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), startHour, startMinute, 0, 0),
+          )
 
-          const endDate = new Date(today)
-          endDate.setHours(endHour, endMinute, 0, 0)
+          const endDate = new Date(
+            Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), endHour, endMinute, 0, 0),
+          )
 
           return {
             ...slot,
