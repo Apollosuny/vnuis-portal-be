@@ -315,3 +315,63 @@ enum EventRegistrationStatus {
   CANCELLED
   ATTENDED
 }
+
+// Blockchain Transaction models
+enum BlockchainType {
+  SOLANA
+  POLYGON
+  ETHEREUM
+}
+
+enum BlockchainTransactionType {
+  FORM_SIGN
+  NFT_MINT
+  REWARD_TRANSFER
+}
+
+enum BlockchainTransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model BlockchainTransaction {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  txHash          String
+  chain           BlockchainType
+  txType          BlockchainTransactionType
+  status          BlockchainTransactionStatus @default(PENDING)
+  senderAddress   String
+  receiverAddress String?
+  executedAt      DateTime?
+  metadata        Json?
+
+  // Relations
+  formSignatures FormSignatureOnChain[]
+  
+  @@index([txHash])
+  @@index([chain, txType, status])
+}
+
+model FormSignatureOnChain {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  formHash String
+
+  // Relations
+  formSubmissionId String                                @db.Uuid
+  formSubmission   AdministrativeProceduresFormSubmission @relation(fields: [formSubmissionId], references: [id])
+
+  transactionId String                @db.Uuid
+  transaction   BlockchainTransaction @relation(fields: [transactionId], references: [id])
+
+  @@unique([formSubmissionId, transactionId])
+  @@index([formHash])
+}
