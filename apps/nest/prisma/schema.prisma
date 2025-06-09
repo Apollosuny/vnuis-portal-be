@@ -34,6 +34,7 @@ model User {
   // Relations
   student  Student?
   operator Operator?
+  blockchainTransactions BlockchainTransaction[] // Added relation for blockchain transactions
 }
 
 enum Role {
@@ -243,6 +244,9 @@ model AdministrativeProceduresFormSubmission {
   student   Student @relation(fields: [studentId], references: [id])
 
   handleBy Operator? @relation(fields: [handleByOperatorId], references: [id])
+  
+  // Blockchain signature relation
+  formSignatureOnChain FormSignatureOnChain?
 }
 
 enum FormSubmissionStatus {
@@ -353,8 +357,13 @@ model BlockchainTransaction {
   // Relations
   formSignatures FormSignatureOnChain[]
   
+  // User relation - for tracking who initiated the transaction
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id])
+  
   @@index([txHash])
   @@index([chain, txType, status])
+  @@index([userId])
 }
 
 model FormSignatureOnChain {
@@ -366,12 +375,11 @@ model FormSignatureOnChain {
   formHash String
 
   // Relations
-  formSubmissionId String                                @db.Uuid
+  formSubmissionId String                                @unique @db.Uuid
   formSubmission   AdministrativeProceduresFormSubmission @relation(fields: [formSubmissionId], references: [id])
 
   transactionId String                @db.Uuid
   transaction   BlockchainTransaction @relation(fields: [transactionId], references: [id])
 
-  @@unique([formSubmissionId, transactionId])
   @@index([formHash])
 }
