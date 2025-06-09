@@ -271,6 +271,7 @@ Enum BlockchainType {
 
 Enum BlockchainTransactionType {
   FORM_SIGN
+  FORM_SIGNATURE
   NFT_MINT
   REWARD_TRANSFER
 }

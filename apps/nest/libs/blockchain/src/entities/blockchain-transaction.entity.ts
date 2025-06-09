@@ -11,6 +11,7 @@ export enum BlockchainType {
 
 export enum BlockchainTransactionType {
   FORM_SIGN = 'FORM_SIGN',
+  FORM_SIGNATURE = 'FORM_SIGNATURE',
   NFT_MINT = 'NFT_MINT',
   REWARD_TRANSFER = 'REWARD_TRANSFER',
 }

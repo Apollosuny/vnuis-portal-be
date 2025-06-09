@@ -13,12 +13,14 @@ import { BlockchainTransactionEntity, FormSignatureOnChainEntity } from '../enti
 import { CreateBlockchainTransactionDto } from '../dtos/create-blockchain-transaction.dto'
 import { UpdateBlockchainTransactionDto } from '../dtos/update-blockchain-transaction.dto'
 import { CreateFormSignatureOnChainDto } from '../dtos/create-form-signature.dto'
+import { FormApprovalDto, FormVerificationResponseDto } from '../dtos/form-approval.dto'
 
 @ApiTags('blockchain')
 @Controller('blockchain')
 export class BlockchainController {
   constructor(private readonly blockchainService: BlockchainService) {}
 
+  // Transactions
   @Get('transactions')
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => BlockchainTransactionEntity, isArray: true })
@@ -69,12 +71,13 @@ export class BlockchainController {
 
   @Delete('transactions/:id')
   @ApiBearerAuth()
-  @ApiOkResponse({ type: () => BlockchainTransactionEntity })
+  @ApiOkResponse()
   @UseGuards(JwtGuard)
   deleteTransaction(@Param('id') id: string, @CurUser() user: User) {
     return this.blockchainService.deleteTransaction(id, user)
   }
 
+  // Form Signatures
   @Post('signatures')
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => FormSignatureOnChainEntity })
@@ -92,5 +95,22 @@ export class BlockchainController {
   @UseInterceptors(AppCacheInterceptor)
   getFormSignature(@Param('formSubmissionId') formSubmissionId: string) {
     return this.blockchainService.getFormSignature(formSubmissionId)
+  }
+
+  // Form Approvals
+  @Post('form-approvals')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => FormSignatureOnChainEntity })
+  @UseGuards(JwtGuard)
+  async recordFormApproval(@Body() dto: FormApprovalDto) {
+    return this.blockchainService.recordFormApproval(dto)
+  }
+
+  @Post('form-approvals/:submissionId/verify')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => FormVerificationResponseDto })
+  @UseGuards(JwtGuard)
+  async verifyFormSubmission(@Param('submissionId') submissionId: string, @Body() body: { formData: any }) {
+    return this.blockchainService.verifyFormSubmission(submissionId, body.formData)
   }
 }
