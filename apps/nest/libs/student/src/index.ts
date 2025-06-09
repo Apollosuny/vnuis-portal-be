@@ -1,2 +1,7 @@
 export * from './student.module'
 export * from './student.service'
+export * from './student.controller'
+export * from './entities/student.entity'
+export * from './dtos/create-student.dto'
+export * from './dtos/update-student.dto'
+export * from './dtos/get-students.dto'
