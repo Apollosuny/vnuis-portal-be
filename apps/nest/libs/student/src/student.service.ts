@@ -6,6 +6,7 @@ import { StudentEntity } from './entities/student.entity'
 import { CreateStudentDto } from './dtos/create-student.dto'
 import { UpdateStudentDto } from './dtos/update-student.dto'
 import { GetStudentsDto } from './dtos/get-students.dto'
+import { GetStudentListResDto } from './dtos/get-student-list-res.dto'
 
 @Injectable()
 export class StudentService {
@@ -55,7 +56,7 @@ export class StudentService {
 
     const items = students.map((student) => th.toInstanceSafe(StudentEntity, student))
 
-    return {
+    return th.toInstanceSafe(GetStudentListResDto, {
       items,
       meta: {
         total,
@@ -63,7 +64,7 @@ export class StudentService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-    }
+    })
   }
 
   async findOne(id: string) {
