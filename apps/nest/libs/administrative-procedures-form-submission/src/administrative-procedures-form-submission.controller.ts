@@ -21,6 +21,7 @@ import { AdministrativeProceduresFormSubmissionEntity } from './entities/adminis
 import { th } from '@app/helper'
 import { TransformerExposeAll } from '@app/core/decorators/transformer-expose-all.decorator'
 import { FormSubmissionStatus } from '@prisma/client'
+import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
 
 @ApiTags('official-forms-submissions')
 @Controller('official-forms-submissions')
@@ -109,7 +110,7 @@ export class AdministrativeProceduresFormSubmissionController {
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: () => AdministrativeProceduresFormSubmissionEntity })
   @HttpCode(HttpStatus.OK)
-  @TransformerExposeAll()
+  @ExposeAll()
   async getSubmissionById(@CurUser() user: UserEntity, @Param('id') id: string) {
     const submission = await this._administrativeProceduresFormSubmissionService.getSubmissionById(id, {
       includeForm: true, // Include the related form data
@@ -133,8 +134,7 @@ export class AdministrativeProceduresFormSubmissionController {
           ...submission,
           result: { ...submission.result }, // Ensure result is a proper object
         }
-
-        return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submissionWithProcessedResult)
+        return th.toInstanceUnsafe(AdministrativeProceduresFormSubmissionEntity, submissionWithProcessedResult)
       }
 
       return th.toInstanceSafe(AdministrativeProceduresFormSubmissionEntity, submission)
