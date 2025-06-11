@@ -14,6 +14,7 @@ Table User {
   role Role [not null, default: 'STUDENT']
   student Student
   operator Operator
+  blockchainTransactions BlockchainTransaction [not null]
 }
 
 Table Student {
@@ -148,6 +149,7 @@ Table AdministrativeProceduresFormSubmission {
   studentId String [not null]
   student Student [not null]
   handleBy Operator
+  formSignatureOnChain FormSignatureOnChain
 }
 
 Table Event {
@@ -189,6 +191,34 @@ Table EventRegistration {
   indexes {
     (eventId, studentId) [unique]
   }
+}
+
+Table BlockchainTransaction {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  txHash String [not null]
+  chain BlockchainType [not null]
+  txType BlockchainTransactionType [not null]
+  status BlockchainTransactionStatus [not null, default: 'PENDING']
+  senderAddress String [not null]
+  receiverAddress String
+  executedAt DateTime
+  metadata Json
+  formSignatures FormSignatureOnChain [not null]
+  userId String
+  user User
+}
+
+Table FormSignatureOnChain {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  formHash String [not null]
+  formSubmissionId String [unique, not null]
+  formSubmission AdministrativeProceduresFormSubmission [not null]
+  transactionId String [not null]
+  transaction BlockchainTransaction [not null]
 }
 
 Enum Role {
@@ -233,6 +263,25 @@ Enum EventRegistrationStatus {
   ATTENDED
 }
 
+Enum BlockchainType {
+  SOLANA
+  POLYGON
+  ETHEREUM
+}
+
+Enum BlockchainTransactionType {
+  FORM_SIGN
+  FORM_SIGNATURE
+  NFT_MINT
+  REWARD_TRANSFER
+}
+
+Enum BlockchainTransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
 Ref: Student.userId - User.id
 
 Ref: Operator.userId - User.id
@@ -262,3 +311,9 @@ Ref: EventRegistration.eventId > Event.id
 Ref: EventRegistration.studentId > Student.id
 
 Ref: EventRegistration.handleByOperatorId > Operator.id
+
+Ref: BlockchainTransaction.userId > User.id
+
+Ref: FormSignatureOnChain.formSubmissionId - AdministrativeProceduresFormSubmission.id
+
+Ref: FormSignatureOnChain.transactionId > BlockchainTransaction.id

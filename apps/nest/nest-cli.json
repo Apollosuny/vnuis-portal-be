@@ -155,6 +155,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/administrative-procedures-form-submission/tsconfig.lib.json"
       }
+    },
+    "blockchain": {
+      "type": "library",
+      "root": "libs/blockchain",
+      "entryFile": "index",
+      "sourceRoot": "libs/blockchain/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/blockchain/tsconfig.lib.json"
+      }
     }
   }
 }
