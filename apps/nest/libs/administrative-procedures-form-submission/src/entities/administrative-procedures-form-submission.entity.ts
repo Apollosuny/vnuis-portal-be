@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { Expose, Type } from 'class-transformer'
 import { AdministrativeProceduresFormEntity } from '@app/administrative-procedures-form/entities/administrative-procedures-form.entity'
 import { FormSubmissionStatus } from '@prisma/client'
+import { StudentEntity } from '@app/student/entities/student.entity'
 
 export class AdministrativeProceduresFormSubmissionEntity {
   @ApiProperty()
@@ -49,4 +50,9 @@ export class AdministrativeProceduresFormSubmissionEntity {
   @Expose()
   @Type(() => AdministrativeProceduresFormEntity)
   form?: AdministrativeProceduresFormEntity
+
+  @ApiProperty({ type: () => StudentEntity })
+  @Expose()
+  @Type(() => StudentEntity)
+  student?: StudentEntity
 }
