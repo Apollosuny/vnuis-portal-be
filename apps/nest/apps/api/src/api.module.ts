@@ -11,6 +11,7 @@ import { RecurringPatternModule } from '@app/recurring-pattern'
 import { AdministrativeProceduresFormModule } from '@app/administrative-procedures-form'
 import { AdministrativeProceduresFormSubmissionModule } from '@app/administrative-procedures-form-submission'
 import { EventModule } from '@app/event'
+import { FileModule } from '@app/file'
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EventModule } from '@app/event'
     AuthModule,
     OperatorModule,
     StudentModule,
+    FileModule,
     RoomModule,
     RoomBookingModule,
     RoomTimeSlotModule,

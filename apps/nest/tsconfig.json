@@ -130,6 +130,12 @@
       ],
       "@app/blockchain/*": [
         "libs/blockchain/src/*"
+      ],
+      "@app/file": [
+        "libs/file/src"
+      ],
+      "@app/file/*": [
+        "libs/file/src/*"
       ]
     }
   }

@@ -36,6 +36,8 @@
     "test:e2e": "jest --config ./apps/nest/test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.828.0",
+    "@aws-sdk/s3-presigned-post": "^3.828.0",
     "@keyv/redis": "^4.2.0",
     "@nestjs/cache-manager": "^3.0.0-next.0",
     "@nestjs/common": "^10.0.0",
@@ -59,6 +61,7 @@
     "keyv": "^5.2.3",
     "lodash": "^4.17.21",
     "luxon": "^3.5.0",
+    "mime-types": "^3.0.1",
     "nestjs-prisma": "^0.24.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -161,7 +164,8 @@
       "^@app/administrative-procedures-form(|/.*)$": "<rootDir>/libs/administrative-procedures-form/src/$1",
       "^@app/administrative-procedures-form-submission(|/.*)$": "<rootDir>/libs/administrative-procedures-form-submission/src/$1",
       "^@app/event(|/.*)$": "<rootDir>/libs/event/src/$1",
-      "^@app/blockchain(|/.*)$": "<rootDir>/libs/blockchain/src/$1"
+      "^@app/blockchain(|/.*)$": "<rootDir>/libs/blockchain/src/$1",
+      "^@app/file(|/.*)$": "<rootDir>/libs/file/src/$1"
     }
   }
 }

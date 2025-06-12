@@ -17,8 +17,8 @@ export const defaultValidatorPipe = new ValidationPipe({
   transformOptions: { strategy: 'excludeAll', exposeUnsetFields: false },
 })
 
-@ValidatorConstraint({ name: 'IsFileNameContraint', async: false })
-export class IsFileNameContraint implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'IsFileNameConstraint', async: false })
+export class IsFileNameConstraint implements ValidatorConstraintInterface {
   validate(value: any): boolean {
     return value && path.basename(value) === value
   }
