@@ -10,20 +10,41 @@ import { UserJwtPayload } from '@app/auth/payloads/user-jwt.payload'
 @Injectable()
 export class FileService {
   async genS3Upload(user: UserJwtPayload, dto: GenUploadS3Dto) {
-    // if (!user.profileId) {
-    //   throw new BadRequestException('User has not profile');
-    // }
-    // const fileExt = path.extname(dto.fileName);
-    // const nameOnly = dto.fileName.substring(
-    //   0,
-    //   dto.fileName.length - fileExt.length,
-    // );
-    // let s3Key = '';
-    // switch (dto.fileType) {
-    //   case FileType.public:
-    //     s3Key = `users/${user.profileId}/${dto.fileType}/${nameOnly}_${Date.now()}${fileExt}`;
-    //     return await this.createS3Presigned(s3Key, dto.contentType);
-    // }
+    if (!user.id) {
+      throw new BadRequestException('User ID not provided')
+    }
+
+    const fileExt = path.extname(dto.fileName)
+    const nameOnly = dto.fileName.substring(0, dto.fileName.length - fileExt.length)
+
+    let s3Key = ''
+    const timestamp = Date.now()
+    const userId = user.id
+
+    switch (dto.fileType) {
+      case FileType.public:
+        s3Key = `users/${userId}/${dto.fileType}/${nameOnly}_${timestamp}${fileExt}`
+        break
+      case FileType.private:
+        s3Key = `users/${userId}/${dto.fileType}/${nameOnly}_${timestamp}${fileExt}`
+        break
+      case FileType.avatar:
+        s3Key = `users/${userId}/avatars/${nameOnly}_${timestamp}${fileExt}`
+        break
+      case FileType.document:
+        s3Key = `documents/${userId}/${nameOnly}_${timestamp}${fileExt}`
+        break
+      case FileType.form:
+        s3Key = `forms/${userId}/${nameOnly}_${timestamp}${fileExt}`
+        break
+      case FileType.event:
+        s3Key = `events/${userId}/${nameOnly}_${timestamp}${fileExt}`
+        break
+      default:
+        throw new BadRequestException('Invalid file type')
+    }
+
+    return await this.createS3Presigned(s3Key, dto.contentType)
   }
 
   async createS3Presigned(s3Key: string, contentType = undefined) {
