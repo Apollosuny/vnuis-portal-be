@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { Expose } from 'class-transformer'
-import { IsEnum, IsMimeType, IsNotEmpty, IsString, Validate } from 'class-validator'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { Expose, Type } from 'class-transformer'
+import { IsEnum, IsMimeType, IsNotEmpty, IsObject, IsOptional, IsString, Validate } from 'class-validator'
 import { FileType } from '../models/file.type'
 import { IsFileNameConstraint } from '@app/helper'
 
@@ -20,8 +20,15 @@ export class GenUploadS3Dto {
   contentType: string
 
   @Expose()
-  @ApiProperty()
+  @ApiProperty({ enum: FileType })
   @IsNotEmpty()
   @IsEnum(FileType)
   fileType: FileType
+
+  @Expose()
+  @ApiPropertyOptional({ description: 'Additional metadata for the file, such as formId for admin forms' })
+  @IsOptional()
+  @IsObject()
+  @Type(() => Object)
+  metadata?: Record<string, any>
 }

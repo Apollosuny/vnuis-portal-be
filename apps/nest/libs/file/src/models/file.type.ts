@@ -5,4 +5,6 @@ export enum FileType {
   document = 'document',
   form = 'form',
   event = 'event',
+  formPdf = 'formPdf',
+  adminForm = 'adminForm',
 }
