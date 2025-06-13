@@ -78,7 +78,7 @@ async function main() {
   console.log('PRISMA DATABASE SEEDING...')
 
   // Create SuperAdmin user
-  const superAdminUsername = process.env.SUPER_ADMIN_USERNAME || 'superadmin@example.com'
+  const superAdminUsername = (process.env.SUPER_ADMIN_USERNAME || 'superadmin@example.com').toLowerCase()
   const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'superadmin123'
 
   const existingSuperAdmin = await prisma.user.findUnique({
@@ -113,7 +113,7 @@ async function main() {
   for (let i = 0; i < adminCount; i++) {
     const firstName = faker.person.firstName()
     const lastName = faker.person.lastName()
-    const username = `admin${i + 1}@virtuuni.edu.vn`
+    const username = `admin${i + 1}@virtuuni.edu.vn`.toLowerCase()
     const password = 'admin123'
 
     const existingAdmin = await prisma.user.findUnique({
@@ -163,7 +163,7 @@ async function main() {
     const firstName = faker.person.firstName()
     const lastName = faker.person.lastName()
     const studentId = `ST${String(2000 + i).padStart(5, '0')}`
-    const username = `${studentId}@student.virtuuni.edu.vn`
+    const username = `${studentId.toLowerCase()}@student.virtuuni.edu.vn`.toLowerCase()
     const password = 'student123'
     const enrollYear = 2020 + Math.floor(Math.random() * 5)
     const major = majors[Math.floor(Math.random() * majors.length)]
@@ -233,6 +233,17 @@ async function main() {
           ? 20 + Math.floor(Math.random() * 20)
           : 50 + Math.floor(Math.random() * 150)
 
+    // Check if room already exists
+    const existingRoom = await prisma.room.findUnique({
+      where: { name: roomNumber },
+    })
+
+    if (existingRoom) {
+      console.log(`Room ${roomNumber} already exists, skipping creation`)
+      rooms.push(existingRoom)
+      continue
+    }
+
     const room = await prisma.room.create({
       data: {
         name: roomNumber,
@@ -272,9 +283,46 @@ async function main() {
   const bookingStatuses = Object.values(RoomBookingStatus)
 
   for (let i = 0; i < bookingsCount; i++) {
+    // Make sure we have rooms and students with valid properties
+    if (rooms.length === 0 || students.length === 0) {
+      console.log('Not enough rooms or students to create bookings, skipping')
+      break
+    }
+
     const room = rooms[Math.floor(Math.random() * rooms.length)]
-    const student = students[Math.floor(Math.random() * students.length)].student
-    const operator = Math.random() > 0.3 ? admins[Math.floor(Math.random() * admins.length)].operator : null
+
+    // Get a valid student from the students array
+    let studentIndex = Math.floor(Math.random() * students.length)
+    let studentObj = students[studentIndex]
+    // Make sure studentObj exists and has a student property
+    while (!studentObj || !studentObj.student) {
+      if (students.length === 0) break
+      studentIndex = Math.floor(Math.random() * students.length)
+      studentObj = students[studentIndex]
+    }
+
+    if (!studentObj || !studentObj.student) {
+      console.log('Failed to find a valid student, skipping this booking')
+      continue
+    }
+
+    const student = studentObj.student
+
+    // Get a valid operator from the admins array
+    let operator = null
+    if (Math.random() > 0.3 && admins.length > 0) {
+      let adminIndex = Math.floor(Math.random() * admins.length)
+      let adminObj = admins[adminIndex]
+      // Make sure adminObj exists and has an operator property
+      while (!adminObj || !adminObj.operator) {
+        if (admins.length === 0) break
+        adminIndex = Math.floor(Math.random() * admins.length)
+        adminObj = admins[adminIndex]
+      }
+      if (adminObj && adminObj.operator) {
+        operator = adminObj.operator
+      }
+    }
 
     const today = new Date()
     const bookingDate = addDays(today, -15 + Math.floor(Math.random() * 30)) // From 15 days ago to 15 days ahead
@@ -384,7 +432,37 @@ async function main() {
       formSchema.required.push('scholarshipType', 'gpa')
     }
 
-    const operator = admins[Math.floor(Math.random() * admins.length)].operator
+    // Get a valid operator from the admins array
+    let operator = null
+    if (admins.length > 0) {
+      let adminIndex = Math.floor(Math.random() * admins.length)
+      let adminObj = admins[adminIndex]
+      // Make sure adminObj exists and has an operator property
+      while (!adminObj || !adminObj.operator) {
+        if (admins.length === 0) break
+        adminIndex = Math.floor(Math.random() * admins.length)
+        adminObj = admins[adminIndex]
+      }
+      if (adminObj && adminObj.operator) {
+        operator = adminObj.operator
+      }
+    }
+
+    if (!operator) {
+      console.log(`No valid operator found to create form ${formName}, skipping`)
+      continue
+    }
+
+    // Check if form already exists
+    const existingForm = await prisma.administrativeProceduresForm.findUnique({
+      where: { name: formName },
+    })
+
+    if (existingForm) {
+      console.log(`Form ${formName} already exists, skipping creation`)
+      forms.push(existingForm)
+      continue
+    }
 
     const form = await prisma.administrativeProceduresForm.create({
       data: {
@@ -414,9 +492,45 @@ async function main() {
   const submissionStatuses = Object.values(FormSubmissionStatus)
 
   for (let i = 0; i < submissionsCount; i++) {
+    if (forms.length === 0 || students.length === 0) {
+      console.log('Not enough forms or students to create submissions, skipping')
+      break
+    }
+
     const form = forms[Math.floor(Math.random() * forms.length)]
-    const student = students[Math.floor(Math.random() * students.length)].student
-    const operator = Math.random() > 0.3 ? admins[Math.floor(Math.random() * admins.length)].operator : null
+
+    // Get a valid student from the students array
+    let studentIndex = Math.floor(Math.random() * students.length)
+    let studentObj = students[studentIndex]
+    // Make sure studentObj exists and has a student property
+    while (!studentObj || !studentObj.student) {
+      if (students.length === 0) break
+      studentIndex = Math.floor(Math.random() * students.length)
+      studentObj = students[studentIndex]
+    }
+
+    if (!studentObj || !studentObj.student) {
+      console.log('Failed to find a valid student, skipping this submission')
+      continue
+    }
+
+    const student = studentObj.student
+
+    // Get a valid operator from the admins array if needed
+    let operator = null
+    if (Math.random() > 0.3 && admins.length > 0) {
+      let adminIndex = Math.floor(Math.random() * admins.length)
+      let adminObj = admins[adminIndex]
+      // Make sure adminObj exists and has an operator property
+      while (!adminObj || !adminObj.operator) {
+        if (admins.length === 0) break
+        adminIndex = Math.floor(Math.random() * admins.length)
+        adminObj = admins[adminIndex]
+      }
+      if (adminObj && adminObj.operator) {
+        operator = adminObj.operator
+      }
+    }
 
     // Generate random submission data based on form type
     const submissionData = {
@@ -497,11 +611,44 @@ async function main() {
     const endTime = addHours(startTime, duration)
 
     const category = eventCategories[Math.floor(Math.random() * eventCategories.length)]
-    const operator = admins[Math.floor(Math.random() * admins.length)].operator
+
+    // Get a valid operator from the admins array
+    let operator = null
+    if (admins.length > 0) {
+      let adminIndex = Math.floor(Math.random() * admins.length)
+      let adminObj = admins[adminIndex]
+      // Make sure adminObj exists and has an operator property
+      while (!adminObj || !adminObj.operator) {
+        if (admins.length === 0) break
+        adminIndex = Math.floor(Math.random() * admins.length)
+        adminObj = admins[adminIndex]
+      }
+      if (adminObj && adminObj.operator) {
+        operator = adminObj.operator
+      }
+    }
+
+    if (!operator) {
+      console.log(`No valid operator found to create event, skipping`)
+      continue
+    }
+
+    const eventName = `${category} ${faker.company.buzzNoun()} ${faker.company.buzzAdjective()} Event`
+
+    // Check if event already exists
+    const existingEvent = await prisma.event.findFirst({
+      where: { name: eventName },
+    })
+
+    if (existingEvent) {
+      console.log(`Event ${eventName} already exists, skipping creation`)
+      events.push(existingEvent)
+      continue
+    }
 
     const event = await prisma.event.create({
       data: {
-        name: `${category} ${faker.company.buzzNoun()} ${faker.company.buzzAdjective()} Event`,
+        name: eventName,
         description: faker.lorem.paragraphs(2),
         startTime,
         endTime,
@@ -539,7 +686,22 @@ async function main() {
 
     while (!validStudent && attempts < 10) {
       attempts++
-      const candidateStudent = students[Math.floor(Math.random() * students.length)].student
+      // Get a valid student from the students array
+      let studentIndex = Math.floor(Math.random() * students.length)
+      let studentObj = students[studentIndex]
+      // Make sure studentObj exists and has a student property
+      while (!studentObj || !studentObj.student) {
+        if (students.length === 0) break
+        studentIndex = Math.floor(Math.random() * students.length)
+        studentObj = students[studentIndex]
+      }
+
+      if (!studentObj || !studentObj.student) {
+        console.log('Failed to find a valid student for event registration, skipping')
+        continue
+      }
+
+      const candidateStudent = studentObj.student
 
       // Check if student already registered for this event
       const existingRegistration = await prisma.eventRegistration.findUnique({
@@ -598,7 +760,25 @@ async function main() {
         Math.floor(Math.random() * Object.values(BlockchainTransactionStatus).length)
       ]
 
-    const user = students[Math.floor(Math.random() * students.length)]
+    // Get a valid student user from the students array
+    if (students.length === 0) {
+      console.log('No valid student users available for blockchain transaction, skipping')
+      break
+    }
+
+    let studentIndex = Math.floor(Math.random() * students.length)
+    let user = students[studentIndex]
+    // Make sure user exists
+    while (!user) {
+      if (students.length === 0) break
+      studentIndex = Math.floor(Math.random() * students.length)
+      user = students[studentIndex]
+    }
+
+    if (!user) {
+      console.log('Failed to find a valid student user for blockchain transaction, skipping')
+      continue
+    }
 
     await prisma.blockchainTransaction.create({
       data: {
