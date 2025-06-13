@@ -3,7 +3,6 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { FileService } from '../services/file.service'
 import { JwtSimpleGuard } from '@app/core/modules/simple-auth/jwt.simple.guard'
 import { GenUploadS3Dto } from '../dtos/gen-upload-s3.dto'
-import { UploadFormPdfDto } from '../dtos/upload-form-pdf.dto'
 import { CurUser } from '@app/core/decorators/user.decorator'
 import { UserJwtPayload } from '@app/auth/payloads/user-jwt.payload'
 

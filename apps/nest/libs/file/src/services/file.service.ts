@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { GenUploadS3Dto } from '../dtos/gen-upload-s3.dto'
-import { UploadFormPdfDto } from '../dtos/upload-form-pdf.dto'
 import path from 'path'
 import { FileType } from '../models/file.type'
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
