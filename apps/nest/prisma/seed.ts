@@ -390,46 +390,79 @@ async function main() {
 
     const requireApproval = Math.random() > 0.3 // 70% chance form requires approval
 
-    // Create a form schema for each form type
-    const formSchema: any = {
-      title: formName,
-      type: 'object',
-      required: ['studentName', 'studentId', 'reason'],
-      properties: {
-        studentName: { type: 'string', title: 'Full Name' },
-        studentId: { type: 'string', title: 'Student ID' },
-        reason: { type: 'string', title: 'Reason' },
-        additionalInfo: { type: 'string', title: 'Additional Information' },
-      },
+    // Define question type that includes options for select type
+    type FormQuestion = {
+      id: number
+      title: string
+      type: string
+      required: boolean
+      options?: string[]
+    }
+
+    // Create a form data with questions array instead of JSON Schema
+    const formData = {
+      questions: [
+        {
+          id: 1,
+          title: 'Full Name',
+          type: 'text',
+          required: true,
+        },
+        {
+          id: 2,
+          title: 'Student ID',
+          type: 'text',
+          required: true,
+        },
+        {
+          id: 3,
+          title: 'Reason',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 4,
+          title: 'Additional Information',
+          type: 'textarea',
+          required: false,
+        },
+      ] as FormQuestion[],
     }
 
     // Add form-specific fields
     if (formType === 'Transcript Request') {
-      formSchema.properties.transcriptType = {
-        type: 'string',
-        title: 'Transcript Type',
-        enum: ['Official', 'Unofficial'],
-        enumNames: ['Official Transcript', 'Unofficial Transcript'],
-      }
-      formSchema.properties.deliveryMethod = {
-        type: 'string',
-        title: 'Delivery Method',
-        enum: ['email', 'mail', 'pickup'],
-        enumNames: ['Email', 'Mail', 'Pick-up in person'],
-      }
-      formSchema.required.push('transcriptType', 'deliveryMethod')
+      formData.questions.push(
+        {
+          id: 5,
+          title: 'Transcript Type',
+          type: 'select',
+          options: ['Official Transcript', 'Unofficial Transcript'],
+          required: true,
+        },
+        {
+          id: 6,
+          title: 'Delivery Method',
+          type: 'select',
+          options: ['Email', 'Mail', 'Pick-up in person'],
+          required: true,
+        },
+      )
     } else if (formType === 'Scholarship Application') {
-      formSchema.properties.scholarshipType = {
-        type: 'string',
-        title: 'Scholarship Type',
-        enum: ['academic', 'financial', 'athletic'],
-        enumNames: ['Academic Merit', 'Financial Need', 'Athletic Achievement'],
-      }
-      formSchema.properties.gpa = {
-        type: 'number',
-        title: 'Current GPA',
-      }
-      formSchema.required.push('scholarshipType', 'gpa')
+      formData.questions.push(
+        {
+          id: 5,
+          title: 'Scholarship Type',
+          type: 'select',
+          options: ['Academic Merit', 'Financial Need', 'Athletic Achievement'],
+          required: true,
+        },
+        {
+          id: 6,
+          title: 'Current GPA',
+          type: 'number',
+          required: true,
+        },
+      )
     }
 
     // Get a valid operator from the admins array
@@ -469,8 +502,8 @@ async function main() {
         name: formName,
         slug,
         description: `Form for ${formType}`,
-        type: formType,
-        data: formSchema,
+        type: 'PROCEDURES', // Changed to match test enum value
+        data: formData,
         isActive: Math.random() > 0.1, // 90% chance form is active
         allowEditAfterSubmit: Math.random() > 0.7, // 30% chance edit is allowed
         requireApproval,
@@ -532,21 +565,50 @@ async function main() {
       }
     }
 
-    // Generate random submission data based on form type
-    const submissionData = {
-      studentName: `${student.firstName} ${student.lastName}`,
-      studentId: student.studentId,
-      reason: faker.lorem.paragraph(),
-      additionalInfo: Math.random() > 0.5 ? faker.lorem.paragraph() : '',
+    // Generate random submission answers array to match the form questions
+    const submissionAnswers = []
+
+    // Assuming formData exists and has questions
+    if (form.data && Array.isArray(form.data.questions)) {
+      form.data.questions.forEach((question, index) => {
+        let answer = ''
+
+        // Generate appropriate answers based on question type
+        switch (question.type) {
+          case 'text':
+            if (question.title === 'Full Name') {
+              answer = `${student.firstName} ${student.lastName}`
+            } else if (question.title === 'Student ID') {
+              answer = student.studentId
+            } else {
+              answer = faker.lorem.words(3)
+            }
+            break
+          case 'textarea':
+            answer = faker.lorem.paragraph()
+            break
+          case 'select':
+            if (question.options && question.options.length > 0) {
+              answer = question.options[Math.floor(Math.random() * question.options.length)]
+            }
+            break
+          case 'number':
+            answer = (3 + Math.random() * 1).toFixed(2) // For GPA or other numbers
+            break
+          default:
+            answer = faker.lorem.words(3)
+        }
+
+        submissionAnswers.push({
+          questionId: question.id,
+          answer,
+        })
+      })
     }
 
-    // Add form-specific fields
-    if (form.type === 'Transcript Request') {
-      submissionData['transcriptType'] = Math.random() > 0.5 ? 'Official' : 'Unofficial'
-      submissionData['deliveryMethod'] = ['email', 'mail', 'pickup'][Math.floor(Math.random() * 3)]
-    } else if (form.type === 'Scholarship Application') {
-      submissionData['scholarshipType'] = ['academic', 'financial', 'athletic'][Math.floor(Math.random() * 3)]
-      submissionData['gpa'] = (3 + Math.random() * 1).toFixed(2) // GPA between 3.0 and 4.0
+    // Create result object with answers array
+    const submissionResult = {
+      answers: submissionAnswers,
     }
 
     const status = submissionStatuses[Math.floor(Math.random() * submissionStatuses.length)]
@@ -557,7 +619,7 @@ async function main() {
       data: {
         formId: form.id,
         studentId: student.id,
-        result: submissionData,
+        result: submissionResult,
         status,
         handleByOperatorId: status !== FormSubmissionStatus.PENDING ? operator?.id : null,
         handleAt:
@@ -579,7 +641,7 @@ async function main() {
           executedAt: new Date(),
           metadata: {
             formName: form.name,
-            studentName: submissionData.studentName,
+            studentName: student.firstName + ' ' + student.lastName,
             timestamp: new Date().toISOString(),
           },
           userId: student.userId,
