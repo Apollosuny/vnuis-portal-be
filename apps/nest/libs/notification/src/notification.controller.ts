@@ -10,6 +10,7 @@ import { RawQuery } from '@app/core/decorators/query.decorator'
 import { NotificationService } from './notification.service'
 import { NotificationEntity } from './entities/notification.entity'
 import { CreateNotificationDto, UpdateNotificationDto, QueryNotificationDto, NotificationStatsResDto } from './dtos'
+import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
 
 @ApiTags('notifications')
 @Controller('notifications')
@@ -32,6 +33,7 @@ export class NotificationController {
   @UseGuards(JwtGuard)
   @CacheTTL(2000)
   @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   getNotificationStats() {
     return this.notificationService.getNotificationStats()
   }

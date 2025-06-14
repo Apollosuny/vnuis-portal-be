@@ -10,6 +10,10 @@ import {
   BlockchainType,
   BlockchainTransactionType,
   BlockchainTransactionStatus,
+  NotificationType,
+  NotificationStatus,
+  NotificationPriority,
+  NotificationTargetType,
 } from '@prisma/client'
 import { faker } from '@faker-js/faker/locale/vi'
 import { DateTime } from 'luxon'
@@ -864,8 +868,288 @@ async function main() {
   console.log('SEED DATA COMPLETED!')
 }
 
+// Create Notifications (200 notifications across different types)
+async function createNotificationsData() {
+  console.log('CREATING NOTIFICATION SEED DATA...')
+
+  // Get existing users first
+  const students = await prisma.student.findMany({
+    include: {
+      user: true,
+    },
+  })
+
+  const operators = await prisma.operator.findMany({
+    include: {
+      user: true,
+    },
+  })
+
+  if (students.length === 0 || operators.length === 0) {
+    console.log('Not enough users to create notifications, skipping')
+    return
+  }
+
+  // Get some entities to reference in notifications
+  const forms = await prisma.administrativeProceduresForm.findMany({
+    take: 5,
+  })
+
+  const events = await prisma.event.findMany({
+    take: 5,
+  })
+
+  const rooms = await prisma.room.findMany({
+    take: 5,
+  })
+
+  // Find a valid admin to be the notification creator
+  let admin = operators.find((op) => op.user && op.user.role === 'ADMIN')
+
+  if (!admin || !admin.user) {
+    console.log('No admin found to create notifications, using the first operator')
+    admin = operators[0]
+  }
+
+  if (!admin || !admin.user) {
+    console.log('No valid operator found to create notifications, skipping')
+    return
+  }
+
+  const notificationsCount = 200
+
+  // Define the notification types and their weights
+  const notificationTypeDistribution = [
+    { type: NotificationType.ACADEMIC, weight: 30 },
+    { type: NotificationType.EVENT, weight: 30 },
+    { type: NotificationType.SYSTEM, weight: 20 },
+    { type: NotificationType.URGENT, weight: 10 },
+    { type: NotificationType.GENERAL, weight: 10 },
+  ]
+
+  // Calculate total weight
+  const totalWeight = notificationTypeDistribution.reduce((sum, item) => sum + item.weight, 0)
+
+  // Function to select a weighted random type
+  function getRandomType() {
+    const rand = Math.random() * totalWeight
+    let sum = 0
+
+    for (const item of notificationTypeDistribution) {
+      sum += item.weight
+      if (rand <= sum) {
+        return item.type
+      }
+    }
+
+    return NotificationType.GENERAL // Fallback
+  }
+
+  // Priorities
+  const priorities = [
+    NotificationPriority.LOW,
+    NotificationPriority.NORMAL,
+    NotificationPriority.HIGH,
+    NotificationPriority.CRITICAL,
+  ]
+
+  // Target types
+  const targetTypes = [
+    NotificationTargetType.ALL_STUDENTS,
+    NotificationTargetType.SPECIFIC_STUDENTS,
+    NotificationTargetType.BY_CLASS,
+    NotificationTargetType.BY_MAJOR,
+  ]
+
+  for (let i = 0; i < notificationsCount; i++) {
+    // Select a notification type with weighted distribution
+    const notificationType = getRandomType()
+
+    // Generate title and content based on type
+    let title = ''
+    let content = ''
+    let metadata = {}
+
+    switch (notificationType) {
+      case NotificationType.ACADEMIC:
+        if (forms.length > 0) {
+          const form = forms[Math.floor(Math.random() * forms.length)]
+          title = `Academic Update: ${form.name}`
+          content = `Important information regarding ${form.name}: ${faker.lorem.paragraph()}`
+          metadata = {
+            formId: form.id,
+            formName: form.name,
+            formType: form.type,
+            deadline: addDays(new Date(), Math.floor(Math.random() * 14) + 1).toISOString(),
+          }
+        } else {
+          title = 'Academic Update'
+          content = `Important academic information: ${faker.lorem.paragraph()}`
+        }
+        break
+
+      case NotificationType.EVENT:
+        if (events.length > 0) {
+          const event = events[Math.floor(Math.random() * events.length)]
+          title = `Event Reminder: ${event.name}`
+          content = `Don't miss the upcoming event "${event.name}". ${faker.lorem.paragraph()}`
+          metadata = {
+            eventId: event.id,
+            eventName: event.name,
+            eventTime: event.startTime,
+            location: event.location,
+          }
+        } else {
+          title = 'Event Update'
+          content = `New campus event announced: ${faker.lorem.paragraph()}`
+        }
+        break
+
+      case NotificationType.SYSTEM:
+        title = 'System Notification'
+        content = `System update information: ${faker.lorem.paragraph()}`
+        metadata = {
+          systemName: faker.company.buzzNoun(),
+          updateTime: new Date().toISOString(),
+          importance: Math.random() > 0.5 ? 'high' : 'normal',
+        }
+        break
+
+      case NotificationType.URGENT:
+        title = `URGENT: ${faker.lorem.sentence(3)}`
+        content = `Urgent notification regarding ${faker.lorem.words(3)}: ${faker.lorem.paragraph()}`
+        metadata = {
+          urgencyLevel: 'high',
+          requiresAction: true,
+          deadline: addDays(new Date(), 1).toISOString(),
+        }
+        break
+
+      case NotificationType.GENERAL:
+      default:
+        title = `University Update: ${faker.lorem.words(3)}`
+        content = faker.lorem.paragraph()
+        metadata = {
+          category: faker.commerce.department(),
+          publishedBy: 'University Administration',
+        }
+        break
+    }
+
+    // Select priority (weighted more towards NORMAL)
+    let priority
+    const priorityRand = Math.random()
+    if (priorityRand < 0.1) {
+      priority = NotificationPriority.CRITICAL
+    } else if (priorityRand < 0.3) {
+      priority = NotificationPriority.HIGH
+    } else if (priorityRand < 0.8) {
+      priority = NotificationPriority.NORMAL
+    } else {
+      priority = NotificationPriority.LOW
+    }
+
+    // Urgent notifications should have HIGH or CRITICAL priority
+    if (notificationType === NotificationType.URGENT) {
+      priority = Math.random() > 0.5 ? NotificationPriority.CRITICAL : NotificationPriority.HIGH
+    }
+
+    // Status - most notifications should be SENT
+    let status
+    const statusRand = Math.random()
+    if (statusRand < 0.05) {
+      status = NotificationStatus.DRAFT
+    } else if (statusRand < 0.15) {
+      status = NotificationStatus.SCHEDULED
+    } else if (statusRand < 0.95) {
+      status = NotificationStatus.SENT
+    } else {
+      status = NotificationStatus.REVOKED
+    }
+
+    // Target type with weighted distribution
+    let targetType
+    const targetRand = Math.random()
+    if (targetRand < 0.4) {
+      targetType = NotificationTargetType.ALL_STUDENTS
+    } else if (targetRand < 0.7) {
+      targetType = NotificationTargetType.SPECIFIC_STUDENTS
+    } else if (targetRand < 0.9) {
+      targetType = NotificationTargetType.BY_MAJOR
+    } else {
+      targetType = NotificationTargetType.BY_CLASS
+    }
+
+    // Create targetIds based on targetType
+    let targetIds: string[] = []
+    if (targetType === NotificationTargetType.SPECIFIC_STUDENTS) {
+      // Select a random subset of students (1-5)
+      const count = Math.floor(Math.random() * 5) + 1
+      for (let j = 0; j < count && j < students.length; j++) {
+        if (students[j] && students[j].id) {
+          targetIds.push(students[j].id)
+        }
+      }
+    } else if (targetType === NotificationTargetType.BY_MAJOR) {
+      targetIds = ['Computer Science', 'Information Technology', 'Business Administration'].slice(
+        0,
+        Math.floor(Math.random() * 3) + 1,
+      )
+    } else if (targetType === NotificationTargetType.BY_CLASS) {
+      targetIds = ['2021', '2022', '2023', '2024', '2025'].slice(0, Math.floor(Math.random() * 3) + 1)
+    }
+
+    // Determine dates
+    const today = new Date()
+    const createdAt = randomDate(addDays(today, -30), today)
+    const sentAt = status === NotificationStatus.SENT ? randomDate(createdAt, today) : null
+    const scheduledAt =
+      status === NotificationStatus.SCHEDULED ? addDays(today, Math.floor(Math.random() * 7) + 1) : null
+    const revokedAt = status === NotificationStatus.REVOKED ? randomDate(addDays(createdAt, 1), today) : null
+
+    // Generate a list of students who have read the notification
+    let readBy: string[] = []
+    if (status === NotificationStatus.SENT && Math.random() > 0.3) {
+      // Between 1 and 10 students have read it
+      const readCount = Math.floor(Math.random() * 10) + 1
+      for (let j = 0; j < readCount && j < students.length; j++) {
+        if (students[j] && students[j].id) {
+          readBy.push(students[j].id)
+        }
+      }
+    }
+
+    try {
+      // Create the notification
+      await prisma.notification.create({
+        data: {
+          title,
+          content,
+          type: notificationType,
+          priority,
+          status,
+          targetType,
+          targetIds,
+          scheduledAt,
+          sentAt,
+          revokedAt,
+          readBy,
+          metadata,
+          createdById: admin.user.id,
+        },
+      })
+    } catch (error) {
+      console.error('Failed to create notification:', error)
+    }
+  }
+
+  console.log('NOTIFICATION SEED DATA COMPLETED!')
+}
+
 main()
   .then(async () => {
+    // Create notifications after other seed data
+    await createNotificationsData()
     await prisma.$disconnect()
   })
   .catch(async (e) => {
