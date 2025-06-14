@@ -15,6 +15,7 @@ Table User {
   student Student
   operator Operator
   blockchainTransactions BlockchainTransaction [not null]
+  notifications Notification [not null]
 }
 
 Table Student {
@@ -221,6 +222,20 @@ Table FormSignatureOnChain {
   transaction BlockchainTransaction [not null]
 }
 
+Table Notification {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  content String [not null]
+  isRead Boolean [not null, default: false]
+  readAt DateTime
+  type NotificationType [not null]
+  metadata Json
+  userId String [not null]
+  user User [not null]
+}
+
 Enum Role {
   STUDENT
   ADMIN
@@ -282,6 +297,14 @@ Enum BlockchainTransactionStatus {
   FAILED
 }
 
+Enum NotificationType {
+  SYSTEM
+  ROOM_BOOKING
+  EVENT
+  FORM_STATUS
+  BLOCKCHAIN_TRANSACTION
+}
+
 Ref: Student.userId - User.id
 
 Ref: Operator.userId - User.id
@@ -317,3 +340,5 @@ Ref: BlockchainTransaction.userId > User.id
 Ref: FormSignatureOnChain.formSubmissionId - AdministrativeProceduresFormSubmission.id
 
 Ref: FormSignatureOnChain.transactionId > BlockchainTransaction.id
+
+Ref: Notification.userId > User.id

@@ -136,6 +136,12 @@
       ],
       "@app/file/*": [
         "libs/file/src/*"
+      ],
+      "@app/notification": [
+        "libs/notification/src"
+      ],
+      "@app/notification/*": [
+        "libs/notification/src/*"
       ]
     }
   }

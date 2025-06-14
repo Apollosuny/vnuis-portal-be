@@ -35,6 +35,7 @@ model User {
   student  Student?
   operator Operator?
   blockchainTransactions BlockchainTransaction[] // Added relation for blockchain transactions
+  notifications Notification[] // Added relation for notifications
 }
 
 enum Role {
@@ -383,4 +384,34 @@ model FormSignatureOnChain {
   transaction   BlockchainTransaction @relation(fields: [transactionId], references: [id])
 
   @@index([formHash])
+}
+
+// Notification model for user notifications
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String
+  content     String
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  type        NotificationType
+  metadata    Json?     // Additional metadata for the notification
+  
+  // Relations
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  SYSTEM
+  ROOM_BOOKING
+  EVENT
+  FORM_STATUS
+  BLOCKCHAIN_TRANSACTION
 }

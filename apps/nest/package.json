@@ -166,7 +166,8 @@
       "^@app/administrative-procedures-form-submission(|/.*)$": "<rootDir>/libs/administrative-procedures-form-submission/src/$1",
       "^@app/event(|/.*)$": "<rootDir>/libs/event/src/$1",
       "^@app/blockchain(|/.*)$": "<rootDir>/libs/blockchain/src/$1",
-      "^@app/file(|/.*)$": "<rootDir>/libs/file/src/$1"
+      "^@app/file(|/.*)$": "<rootDir>/libs/file/src/$1",
+      "^@app/notification(|/.*)$": "<rootDir>/libs/notification/src/$1"
     }
   }
 }
