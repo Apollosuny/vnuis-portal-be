@@ -395,23 +395,56 @@ model Notification {
 
   title       String
   content     String
-  isRead      Boolean   @default(false)
-  readAt      DateTime?
   type        NotificationType
-  metadata    Json?     // Additional metadata for the notification
+  priority    NotificationPriority
+  status      NotificationStatus    @default(DRAFT)
+  targetType  NotificationTargetType
+  targetIds   String[]            @default([])  // For specific students or classes
+  
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  revokedAt   DateTime?
+  
+  // Tracking reads
+  readBy      String[]            @default([])  // Student IDs who have read
+  
+  metadata    Json?               // Additional metadata for the notification
   
   // Relations
-  userId String @db.Uuid
-  user   User   @relation(fields: [userId], references: [id])
+  createdById String @db.Uuid
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
-  @@index([userId, isRead])
-  @@index([userId, createdAt])
+  @@index([createdById])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }
 
 enum NotificationType {
-  SYSTEM
-  ROOM_BOOKING
+  GENERAL
+  ACADEMIC
   EVENT
-  FORM_STATUS
-  BLOCKCHAIN_TRANSACTION
+  SYSTEM
+  URGENT
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum NotificationStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  REVOKED
+}
+
+enum NotificationTargetType {
+  ALL_STUDENTS
+  SPECIFIC_STUDENTS
+  BY_CLASS
+  BY_MAJOR
 }

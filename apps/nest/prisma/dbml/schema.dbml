@@ -228,12 +228,18 @@ Table Notification {
   updatedAt DateTime [not null]
   title String [not null]
   content String [not null]
-  isRead Boolean [not null, default: false]
-  readAt DateTime
   type NotificationType [not null]
+  priority NotificationPriority [not null]
+  status NotificationStatus [not null, default: 'DRAFT']
+  targetType NotificationTargetType [not null]
+  targetIds String[] [not null]
+  scheduledAt DateTime
+  sentAt DateTime
+  revokedAt DateTime
+  readBy String[] [not null]
   metadata Json
-  userId String [not null]
-  user User [not null]
+  createdById String [not null]
+  createdBy User [not null]
 }
 
 Enum Role {
@@ -298,11 +304,32 @@ Enum BlockchainTransactionStatus {
 }
 
 Enum NotificationType {
-  SYSTEM
-  ROOM_BOOKING
+  GENERAL
+  ACADEMIC
   EVENT
-  FORM_STATUS
-  BLOCKCHAIN_TRANSACTION
+  SYSTEM
+  URGENT
+}
+
+Enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+Enum NotificationStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  REVOKED
+}
+
+Enum NotificationTargetType {
+  ALL_STUDENTS
+  SPECIFIC_STUDENTS
+  BY_CLASS
+  BY_MAJOR
 }
 
 Ref: Student.userId - User.id
@@ -341,4 +368,4 @@ Ref: FormSignatureOnChain.formSubmissionId - AdministrativeProceduresFormSubmiss
 
 Ref: FormSignatureOnChain.transactionId > BlockchainTransaction.id
 
-Ref: Notification.userId > User.id
+Ref: Notification.createdById > User.id
