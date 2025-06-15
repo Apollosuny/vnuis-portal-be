@@ -9,8 +9,15 @@ import { User } from '@prisma/client'
 import { RawQuery } from '@app/core/decorators/query.decorator'
 import { NotificationService } from './notification.service'
 import { NotificationEntity } from './entities/notification.entity'
-import { CreateNotificationDto, UpdateNotificationDto, QueryNotificationDto, NotificationStatsResDto } from './dtos'
+import {
+  CreateNotificationDto,
+  UpdateNotificationDto,
+  QueryNotificationDto,
+  NotificationStatsResDto,
+  ReadAllNotificationsDto,
+} from './dtos'
 import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
+import { UserEntity } from '@app/user/entities/user.entity'
 
 @ApiTags('notifications')
 @Controller('notifications')
@@ -25,6 +32,15 @@ export class NotificationController {
   @UseInterceptors(AppCacheInterceptor)
   getNotifications(@RawQuery() queryNotificationDto: QueryNotificationDto) {
     return this.notificationService.getNotifications(queryNotificationDto)
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => NotificationEntity, isArray: true })
+  @UseGuards(JwtGuard)
+  @CacheTTL(2000)
+  getMyNotifications(@CurUser() user: UserEntity, @RawQuery() queryNotificationDto: QueryNotificationDto) {
+    return this.notificationService.getNotificationsByUser(user, queryNotificationDto)
   }
 
   @Get('stats')
@@ -83,6 +99,22 @@ export class NotificationController {
   @UseGuards(JwtGuard)
   revokeNotification(@Param('id') id: string, @CurUser() user: User) {
     return this.notificationService.revokeNotification(id, user)
+  }
+
+  @Post('read-all')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => NotificationEntity, isArray: true })
+  @UseGuards(JwtGuard)
+  markAllAsRead(@CurUser() user: UserEntity, @Body() body: ReadAllNotificationsDto) {
+    return this.notificationService.markAllAsRead(user, body?.ids)
+  }
+
+  @Post(':id/read')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => NotificationEntity })
+  @UseGuards(JwtGuard)
+  markAsRead(@Param('id') id: string, @CurUser() user: UserEntity) {
+    return this.notificationService.markAsRead(id, user)
   }
 
   @Delete(':id')
