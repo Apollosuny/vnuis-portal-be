@@ -234,6 +234,9 @@ export class RoomBookingService {
     const { page = 1, limit = 10 } = pagination || {}
     const { roomId, studentId, status, startDate, endDate, search } = filter || {}
 
+    console.log('Pagination in service:', { page, limit })
+    console.log('Filter params:', { roomId, studentId, status, startDate, endDate, search })
+
     const where: any = {}
 
     if (roomId) {
@@ -277,11 +280,26 @@ export class RoomBookingService {
       }
     }
 
+    // Ensure page and limit are numbers
+    const parsedPage = typeof page === 'string' ? parseInt(page, 10) : page
+    const parsedLimit = typeof limit === 'string' ? parseInt(limit, 10) : limit
+
+    // Validate pagination params
+    const validPage = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
+    const validLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 10 : parsedLimit
+
+    console.log('Validated pagination:', { page: validPage, limit: validLimit })
+
     const total = await this._prisma.roomBooking.count({ where })
+    console.log('Total records found:', total)
+
+    const skip = (validPage - 1) * validLimit
+    console.log('Skip value:', skip)
+
     const bookings = await this._prisma.roomBooking.findMany({
       where,
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: skip,
+      take: validLimit,
       orderBy: {
         createdAt: 'desc',
       },
@@ -297,15 +315,24 @@ export class RoomBookingService {
       },
     })
 
-    return th.toInstanceSafe(GetBookingsResDto, {
+    console.log(`Found ${bookings.length} bookings for page ${validPage}`)
+
+    // Calculate total pages properly
+    const totalPages = validLimit > 0 ? Math.ceil(total / validLimit) : 0
+    console.log('Total pages calculated:', totalPages)
+
+    const response = {
       data: bookings.map((booking) => th.toInstanceSafe(RoomBookingEntity, booking)),
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: validPage,
+        limit: validLimit,
+        totalPages: totalPages,
       },
-    })
+    }
+
+    console.log('Response metadata:', response.meta)
+    return th.toInstanceSafe(GetBookingsResDto, response)
   }
 
   async findOne(id: string): Promise<RoomBookingEntity> {

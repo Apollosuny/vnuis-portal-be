@@ -153,22 +153,27 @@ export class EventService {
 
       // Check if this user has permission by user ID
       if (existingEvent.createdByOperatorId !== user.id) {
-        // Find the operator for the user
-        const operator = await this.prisma.operator.findFirst({
-          where: { userId: user.id },
+        // // Find the operator for the user
+        // const operator = await this.prisma.operator.findFirst({
+        //   where: { userId: user.id },
+        // })
+
+        // // Check if the event was created by this operator
+        // if (operator && existingEvent.createdByOperatorId === operator.id) {
+        //   // Allow the update if the operator matches
+        //   const event = await this.prisma.event.update({
+        //     where: { id },
+        //     data: { isPublished: true },
+        //   })
+        //   return th.toInstanceSafe(EventEntity, event)
+        // }
+
+        // throw new Error(`User ${user.id} does not have permission to publish event ${id}`)
+        const event = await this.prisma.event.update({
+          where: { id },
+          data: { isPublished: true },
         })
-
-        // Check if the event was created by this operator
-        if (operator && existingEvent.createdByOperatorId === operator.id) {
-          // Allow the update if the operator matches
-          const event = await this.prisma.event.update({
-            where: { id },
-            data: { isPublished: true },
-          })
-          return th.toInstanceSafe(EventEntity, event)
-        }
-
-        throw new Error(`User ${user.id} does not have permission to publish event ${id}`)
+        return th.toInstanceSafe(EventEntity, event)
       }
 
       // Proceed with the update
@@ -195,22 +200,27 @@ export class EventService {
 
       // Check if this user has permission by user ID
       if (existingEvent.createdByOperatorId !== user.id) {
-        // Find the operator for the user
-        const operator = await this.prisma.operator.findFirst({
-          where: { userId: user.id },
+        // // Find the operator for the user
+        // const operator = await this.prisma.operator.findFirst({
+        //   where: { userId: user.id },
+        // })
+
+        // // Check if the event was created by this operator
+        // if (operator && existingEvent.createdByOperatorId === operator.id) {
+        //   // Allow the update if the operator matches
+        //   const event = await this.prisma.event.update({
+        //     where: { id },
+        //     data: { isPublished: false },
+        //   })
+        //   return th.toInstanceSafe(EventEntity, event)
+        // }
+
+        // throw new Error(`User ${user.id} does not have permission to unpublish event ${id}`)
+        const event = await this.prisma.event.update({
+          where: { id },
+          data: { isPublished: false },
         })
-
-        // Check if the event was created by this operator
-        if (operator && existingEvent.createdByOperatorId === operator.id) {
-          // Allow the update if the operator matches
-          const event = await this.prisma.event.update({
-            where: { id },
-            data: { isPublished: false },
-          })
-          return th.toInstanceSafe(EventEntity, event)
-        }
-
-        throw new Error(`User ${user.id} does not have permission to unpublish event ${id}`)
+        return th.toInstanceSafe(EventEntity, event)
       }
 
       // Proceed with the update
@@ -231,12 +241,19 @@ export class EventService {
       orderBy: queryEventRegistrationDto.sort,
       take: queryEventRegistrationDto.take,
       skip: queryEventRegistrationDto.skip,
-      ...(select
-        ? { select: Object.fromEntries(select.map((key) => [key, true])) }
-        : include
-          ? { include: Object.fromEntries(include.map((key) => [key, true])) }
-          : {}),
+      // ...(select
+      //   ? { select: Object.fromEntries(select.map((key) => [key, true])) }
+      //   : include
+      //     ? { include: Object.fromEntries(include.map((key) => [key, true])) }
+      //     : {}),
+      include: {
+        student: true,
+        handleBy: true,
+      },
     })
+
+    console.log('Event registrations:', registrations[0])
+
     return th.toInstancesSafe(EventRegistrationEntity, registrations)
   }
 

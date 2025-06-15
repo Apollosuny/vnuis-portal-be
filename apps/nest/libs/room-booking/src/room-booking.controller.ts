@@ -25,6 +25,7 @@ import { HandleRoomBookingDto } from './dtos/handle-room-booking.dto'
 import { FilterRoomBookingDto } from './dtos/filter-room-booking.dto'
 import { PaginationDto } from './dtos/pagination.dto'
 import { RoomBookingEntity } from './entities/room-booking.entity'
+import { GetBookingsResDto } from './dtos/get-bookings-res.dto'
 
 @ApiTags('room-booking')
 @Controller('room-booking')
@@ -46,10 +47,23 @@ export class RoomBookingController {
   @UseGuards(JwtGuard)
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   @ApiBearerAuth()
-  @ApiOkResponse({ type: RoomBookingEntity, isArray: true })
+  @ApiOkResponse({ type: GetBookingsResDto })
   @ApiOperation({ summary: 'Get all room bookings (admin only)' })
   @HttpCode(HttpStatus.OK)
-  findAll(@Query() filter: FilterRoomBookingDto, @Query() pagination: PaginationDto) {
+  async findAll(@Query() filter: FilterRoomBookingDto, @Query('page') page?: number, @Query('limit') limit?: number) {
+    // Log original pagination params received from request
+    console.log('Raw pagination params:', { page, limit })
+
+    // Create pagination object with proper typing
+    const pagination: PaginationDto = {
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+    }
+
+    // Log transformed pagination params
+    console.log('Transformed pagination params:', pagination)
+
+    // Call service with explicit pagination object
     return this._roomBookingService.findAll(filter, pagination)
   }
 
