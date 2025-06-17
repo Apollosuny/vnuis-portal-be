@@ -53,6 +53,14 @@ export class EventController {
     return this.eventService.getEvents(queryEventDto)
   }
 
+  @Get('student')
+  @ApiOkResponse({ type: () => EventEntity, isArray: true })
+  @CacheTTL(2000)
+  @UseInterceptors(AppCacheInterceptor)
+  getEventByStudent(@RawQuery() queryEventDto: QueryEventDto) {
+    return this.eventService.getEventsByStudent(queryEventDto)
+  }
+
   @Get(':id')
   @ApiOkResponse({ type: () => EventEntity })
   @CacheTTL(2000)

@@ -32,9 +32,31 @@ export class EventService {
     return th.toInstancesSafe(EventEntity, events)
   }
 
+  async getEventsByStudent(queryEventDto: QueryEventDto) {
+    const { select, include } = queryEventDto
+    const events = await this.prisma.event.findMany({
+      where: {
+        ...queryEventDto.where,
+        isPublished: true,
+      },
+      orderBy: queryEventDto.sort,
+      take: queryEventDto.take,
+      skip: queryEventDto.skip,
+      ...(select
+        ? { select: Object.fromEntries(select.map((key) => [key, true])) }
+        : include
+          ? { include: Object.fromEntries(include.map((key) => [key, true])) }
+          : {}),
+    })
+    return th.toInstancesSafe(EventEntity, events)
+  }
+
   async getEvent(id: string) {
     const event = await this.prisma.event.findUniqueOrThrow({
       where: { id },
+      include: {
+        registrations: true,
+      },
     })
     return th.toInstanceSafe(EventEntity, event)
   }
