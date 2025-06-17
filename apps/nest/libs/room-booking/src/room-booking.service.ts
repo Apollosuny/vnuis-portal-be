@@ -46,8 +46,6 @@ export class RoomBookingService {
 
     const startTimePrimitive = DateTime.fromISO(startTime)
 
-    console.log('startTimePrimitive', startTimePrimitive.toISO())
-
     const endTimePrimitive = startTimePrimitive.plus({ hours: duration })
 
     const maxEndTimePrimitive = startTimePrimitive.startOf('day').plus({ days: 1 })
@@ -67,7 +65,6 @@ export class RoomBookingService {
       endTimePrimitive,
       freeRangesPrimitiveOffset,
     )
-
     if (!isTimeSlotAvailable) {
       throw new BadRequestException('Requested time slot is not available')
     }
@@ -128,12 +125,7 @@ export class RoomBookingService {
       })),
     )
 
-    // Add null check for weekdayShort
-    // Ensure we get the correct weekday in lowercase
-    const weekdayKey = fromTimePrimitive?.weekdayShort?.toLowerCase() || 'mon'
-
-    // Get the available time ranges for the requested day
-    const possibleTimeRanges = grouppedMap[weekdayKey] || []
+    const possibleTimeRanges = grouppedMap[fromTimePrimitive.weekdayShort!.toLowerCase()] ?? []
 
     // Map overlapped bookings to time ranges
     const overlappedTimeRanges = overlappedBookings.map((s) => {
@@ -147,12 +139,9 @@ export class RoomBookingService {
           offset: parseOffsetMinutes,
         })
         return {
-          startTime: sTimePrimitive.isValid ? sTimePrimitive.toFormat('HH:mm') : '00:00',
-          endTime: eTimePrimitive.isValid ? eTimePrimitive.toFormat('HH:mm') : '23:59',
-          isCrossDay:
-            sTimePrimitive.isValid && eTimePrimitive.isValid
-              ? sTimePrimitive.startOf('day') < eTimePrimitive.startOf('day')
-              : false,
+          startTime: sTimePrimitive.isValid ? sTimePrimitive.toLocal().toFormat('HH:mm') : '00:00',
+          endTime: eTimePrimitive.isValid ? eTimePrimitive.toLocal().toFormat('HH:mm') : '23:59',
+          isCrossDay: sTimePrimitive.startOf('day') < eTimePrimitive.startOf('day'),
         } as TimeRange
       } catch (error) {
         console.error('Error processing time primitives:', error)
