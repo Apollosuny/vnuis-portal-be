@@ -67,6 +67,7 @@ model Student {
   bookings           RoomBooking[]
   forms              AdministrativeProceduresFormSubmission[]
   eventRegistrations EventRegistration[]
+  feedbacks          Feedback[] // Added relation for feedbacks
 }
 
 model Operator {
@@ -90,6 +91,8 @@ model Operator {
   formsHandled              AdministrativeProceduresFormSubmission[]
   events                    Event[]
   eventRegistrationsHandled EventRegistration[]                      @relation("EventRegistrationHandler")
+  feedbacksReviewed         Feedback[]                              // Added relation for reviewed feedbacks
+  feedbackResponses         FeedbackResponse[]                      // Added relation for feedback responses
 }
 
 model Room {
@@ -447,4 +450,118 @@ enum NotificationTargetType {
   SPECIFIC_STUDENTS
   BY_CLASS
   BY_MAJOR
+}
+
+// Feedback models for student feedback with AI sentiment analysis
+model Feedback {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String
+  content     String
+  category    FeedbackCategory
+  rating      Int? // Optional rating 1-5
+  
+  // AI Analysis fields
+  sentiment   SentimentType?
+  confidence  Float? // AI confidence score 0-1
+  keywords    String[] @default([]) // Extracted keywords
+  aiAnalysis  Json? // Raw AI analysis response
+  
+  // Status tracking
+  status      FeedbackStatus @default(SUBMITTED)
+  reviewedAt  DateTime?
+  reviewedBy  String? @db.Uuid
+  
+  // Additional metadata
+  metadata    Json?
+  
+  // Relations
+  studentId String  @db.Uuid
+  student   Student @relation(fields: [studentId], references: [id])
+  
+  reviewedByOperatorId String?   @db.Uuid
+  reviewedByOperator   Operator? @relation(fields: [reviewedByOperatorId], references: [id])
+  
+  // Feedback responses from admin/operators
+  responses FeedbackResponse[]
+  
+  @@index([studentId])
+  @@index([category])
+  @@index([sentiment])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum FeedbackCategory {
+  GENERAL
+  USER_EXPERIENCE
+  FUNCTIONALITY
+  PERFORMANCE
+  DESIGN
+  CONTENT
+  TECHNICAL_ISSUE
+  SUGGESTION
+  COMPLAINT
+  COMPLIMENT
+}
+
+enum SentimentType {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+  MIXED
+}
+
+enum FeedbackStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+}
+
+model FeedbackResponse {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  content     String
+  isInternal  Boolean @default(false) // Internal note vs public response
+  
+  // Relations
+  feedbackId String   @db.Uuid
+  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+  
+  operatorId String   @db.Uuid
+  operator   Operator @relation(fields: [operatorId], references: [id])
+  
+  @@index([feedbackId])
+  @@index([operatorId])
+}
+
+// Feedback Analytics for tracking trends
+model FeedbackAnalytics {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  date        DateTime @db.Date
+  category    FeedbackCategory
+  sentiment   SentimentType
+  count       Int
+  
+  // Aggregated metrics
+  avgRating   Float?
+  totalResponses Int @default(0)
+  
+  @@unique([date, category, sentiment])
+  @@index([date])
+  @@index([category])
+  @@index([sentiment])
 }
