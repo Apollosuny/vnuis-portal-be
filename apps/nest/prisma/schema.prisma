@@ -565,3 +565,27 @@ model FeedbackAnalytics {
   @@index([category])
   @@index([sentiment])
 }
+
+// Chatbot Intent-Route mapping for student chatbot
+model ChatbotIntentRoute {
+  id String @id @default(uuid()) @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent       String  @unique // Unique intent identifier
+  routePath    String  // Frontend route path
+  routeName    String  // Human-readable route name
+  description  String? // Description of what this route does
+  keywords     String[] @default([]) // Keywords to match this intent
+  priority     Int     @default(1) // Priority for matching (higher = more important)
+  isActive     Boolean @default(true) // Whether this intent-route mapping is active
+  
+  // Additional metadata for response generation
+  responseTemplate String? // Template for bot response
+  quickActions     Json?   // Quick action buttons to show
+  
+  @@index([intent])
+  @@index([isActive])
+  @@index([priority])
+}

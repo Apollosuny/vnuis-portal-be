@@ -1,4 +1,6 @@
 export * from './ai.module'
 export * from './ai.service'
 export * from './ai-config.service'
+export * from './chatbot-intent.service'
 export * from './interfaces/ai-analysis.interface'
+export * from './interfaces/chatbot-intent.interface'
