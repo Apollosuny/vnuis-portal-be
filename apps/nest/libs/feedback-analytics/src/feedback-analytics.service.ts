@@ -104,7 +104,7 @@ export class FeedbackAnalyticsService {
         }),
       ])
 
-    return th.toInstanceUnsafe(DashboardOverviewDto, {
+    return {
       totalFeedbacks,
       totalResponses: responseCount,
       avgRating: averageRating._avg.rating || 0,
@@ -115,7 +115,7 @@ export class FeedbackAnalyticsService {
       },
       categoryDistribution: [],
       recentTrends: [],
-    })
+    }
   }
 
   // Sentiment Analysis
@@ -145,10 +145,10 @@ export class FeedbackAnalyticsService {
       _count: { id: true },
     })
 
-    return th.toInstanceSafe(SentimentAnalysisDto, {
+    return {
       distribution: sentimentStats,
       trends: sentimentTrends,
-    })
+    }
   }
 
   // Category Analysis
@@ -216,7 +216,7 @@ export class FeedbackAnalyticsService {
     const averageResponseTime =
       responseTimes.length > 0 ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length : 0
 
-    return th.toInstanceSafe(ResponseTimeAnalysisDto, {
+    return {
       averageResponseTime,
       responseTimeDistribution: {
         under1Hour: responseTimes.filter((time) => time < 1).length,
@@ -225,7 +225,7 @@ export class FeedbackAnalyticsService {
         over72Hours: responseTimes.filter((time) => time >= 72).length,
       },
       totalResponded: feedbacksWithResponses.length,
-    })
+    }
   }
 
   // Rating Analysis
@@ -253,10 +253,10 @@ export class FeedbackAnalyticsService {
       _avg: { rating: true },
     })
 
-    return th.toInstanceUnsafe(RatingAnalysisDto, {
+    return {
       distribution: ratingStats,
       average: averageRating._avg.rating || 0,
-    })
+    }
   }
 
   // Trend Analysis

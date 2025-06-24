@@ -42,6 +42,7 @@ export class FeedbackAnalyticsController {
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   async getDashboardOverview(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
@@ -74,6 +75,7 @@ export class FeedbackAnalyticsController {
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   async getSentimentAnalysis(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
@@ -115,6 +117,7 @@ export class FeedbackAnalyticsController {
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   async getResponseTimeAnalysis(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
@@ -135,6 +138,7 @@ export class FeedbackAnalyticsController {
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   async getRatingAnalysis(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
