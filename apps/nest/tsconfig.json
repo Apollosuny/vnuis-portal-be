@@ -142,6 +142,24 @@
       ],
       "@app/notification/*": [
         "libs/notification/src/*"
+      ],
+      "@app/feedback": [
+        "libs/feedback/src"
+      ],
+      "@app/feedback/*": [
+        "libs/feedback/src/*"
+      ],
+      "@app/feedback-response": [
+        "libs/feedback-response/src"
+      ],
+      "@app/feedback-response/*": [
+        "libs/feedback-response/src/*"
+      ],
+      "@app/feedback-analytics": [
+        "libs/feedback-analytics/src"
+      ],
+      "@app/feedback-analytics/*": [
+        "libs/feedback-analytics/src/*"
       ]
     }
   }

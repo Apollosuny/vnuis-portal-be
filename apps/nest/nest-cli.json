@@ -182,6 +182,33 @@
       "compilerOptions": {
         "tsConfigPath": "libs/notification/tsconfig.lib.json"
       }
+    },
+    "feedback": {
+      "type": "library",
+      "root": "libs/feedback",
+      "entryFile": "index",
+      "sourceRoot": "libs/feedback/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/feedback/tsconfig.lib.json"
+      }
+    },
+    "feedback-response": {
+      "type": "library",
+      "root": "libs/feedback-response",
+      "entryFile": "index",
+      "sourceRoot": "libs/feedback-response/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/feedback-response/tsconfig.lib.json"
+      }
+    },
+    "feedback-analytics": {
+      "type": "library",
+      "root": "libs/feedback-analytics",
+      "entryFile": "index",
+      "sourceRoot": "libs/feedback-analytics/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/feedback-analytics/tsconfig.lib.json"
+      }
     }
   }
 }

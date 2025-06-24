@@ -37,6 +37,7 @@ Table Student {
   bookings RoomBooking [not null]
   forms AdministrativeProceduresFormSubmission [not null]
   eventRegistrations EventRegistration [not null]
+  feedbacks Feedback [not null]
 }
 
 Table Operator {
@@ -55,6 +56,8 @@ Table Operator {
   formsHandled AdministrativeProceduresFormSubmission [not null]
   events Event [not null]
   eventRegistrationsHandled EventRegistration [not null]
+  feedbacksReviewed Feedback [not null]
+  feedbackResponses FeedbackResponse [not null]
 }
 
 Table Room {
@@ -242,6 +245,57 @@ Table Notification {
   createdBy User [not null]
 }
 
+Table Feedback {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  content String [not null]
+  category FeedbackCategory [not null]
+  rating Int
+  sentiment SentimentType
+  confidence Float
+  keywords String[] [not null]
+  aiAnalysis Json
+  status FeedbackStatus [not null, default: 'SUBMITTED']
+  reviewedAt DateTime
+  reviewedBy String
+  metadata Json
+  studentId String [not null]
+  student Student [not null]
+  reviewedByOperatorId String
+  reviewedByOperator Operator
+  responses FeedbackResponse [not null]
+}
+
+Table FeedbackResponse {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  content String [not null]
+  isInternal Boolean [not null, default: false]
+  feedbackId String [not null]
+  feedback Feedback [not null]
+  operatorId String [not null]
+  operator Operator [not null]
+}
+
+Table FeedbackAnalytics {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  date DateTime [not null]
+  category FeedbackCategory [not null]
+  sentiment SentimentType [not null]
+  count Int [not null]
+  avgRating Float
+  totalResponses Int [not null, default: 0]
+
+  indexes {
+    (date, category, sentiment) [unique]
+  }
+}
+
 Enum Role {
   STUDENT
   ADMIN
@@ -332,6 +386,35 @@ Enum NotificationTargetType {
   BY_MAJOR
 }
 
+Enum FeedbackCategory {
+  GENERAL
+  USER_EXPERIENCE
+  FUNCTIONALITY
+  PERFORMANCE
+  DESIGN
+  CONTENT
+  TECHNICAL_ISSUE
+  SUGGESTION
+  COMPLAINT
+  COMPLIMENT
+}
+
+Enum SentimentType {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+  MIXED
+}
+
+Enum FeedbackStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+}
+
 Ref: Student.userId - User.id
 
 Ref: Operator.userId - User.id
@@ -369,3 +452,11 @@ Ref: FormSignatureOnChain.formSubmissionId - AdministrativeProceduresFormSubmiss
 Ref: FormSignatureOnChain.transactionId > BlockchainTransaction.id
 
 Ref: Notification.createdById > User.id
+
+Ref: Feedback.studentId > Student.id
+
+Ref: Feedback.reviewedByOperatorId > Operator.id
+
+Ref: FeedbackResponse.feedbackId > Feedback.id
+
+Ref: FeedbackResponse.operatorId > Operator.id

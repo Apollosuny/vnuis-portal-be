@@ -167,7 +167,10 @@
       "^@app/event(|/.*)$": "<rootDir>/libs/event/src/$1",
       "^@app/blockchain(|/.*)$": "<rootDir>/libs/blockchain/src/$1",
       "^@app/file(|/.*)$": "<rootDir>/libs/file/src/$1",
-      "^@app/notification(|/.*)$": "<rootDir>/libs/notification/src/$1"
+      "^@app/notification(|/.*)$": "<rootDir>/libs/notification/src/$1",
+      "^@app/feedback(|/.*)$": "<rootDir>/libs/feedback/src/$1",
+      "^@app/feedback-response(|/.*)$": "<rootDir>/libs/feedback-response/src/$1",
+      "^@app/feedback-analytics(|/.*)$": "<rootDir>/libs/feedback-analytics/src/$1"
     }
   }
 }

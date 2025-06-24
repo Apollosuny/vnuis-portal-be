@@ -1,0 +1,5 @@
+export * from './feedback-analytics.module'
+export * from './feedback-analytics.service'
+export * from './feedback-analytics.controller'
+export * from './entities/feedback-analytics.entity'
+export * from './dtos/query-feedback-analytics.dto'
