@@ -14,6 +14,9 @@ import {
   NotificationStatus,
   NotificationPriority,
   NotificationTargetType,
+  FeedbackCategory,
+  SentimentType,
+  FeedbackStatus,
 } from '@prisma/client'
 import { faker } from '@faker-js/faker/locale/vi'
 import { DateTime } from 'luxon'
@@ -1108,7 +1111,7 @@ async function createNotificationsData() {
     const revokedAt = status === NotificationStatus.REVOKED ? randomDate(addDays(createdAt, 1), today) : null
 
     // Generate a list of students who have read the notification
-    let readBy: string[] = []
+    const readBy: string[] = []
     if (status === NotificationStatus.SENT && Math.random() > 0.3) {
       // Between 1 and 10 students have read it
       const readCount = Math.floor(Math.random() * 10) + 1
@@ -1146,10 +1149,342 @@ async function createNotificationsData() {
   console.log('NOTIFICATION SEED DATA COMPLETED!')
 }
 
+// Create Feedback Data (100 feedbacks with AI sentiment analysis)
+async function createFeedbackData() {
+  console.log('CREATING FEEDBACK SEED DATA...')
+
+  // Get existing students and operators
+  const students = await prisma.student.findMany({
+    include: {
+      user: true,
+    },
+  })
+
+  const operators = await prisma.operator.findMany({
+    include: {
+      user: true,
+    },
+  })
+
+  if (students.length === 0 || operators.length === 0) {
+    console.log('Not enough users to create feedback, skipping')
+    return
+  }
+
+  const feedbackCount = 100
+  const feedbackCategories = Object.values(FeedbackCategory)
+  const sentimentTypes = Object.values(SentimentType)
+  const feedbackStatuses = Object.values(FeedbackStatus)
+
+  // Sample feedback content templates for different categories
+  const feedbackTemplates = {
+    [FeedbackCategory.GENERAL]: [
+      'Overall experience with the system has been {sentiment}.',
+      'The platform is {sentiment} for daily use.',
+      'General feedback about the university services.',
+    ],
+    [FeedbackCategory.USER_EXPERIENCE]: [
+      'The user interface is {sentiment} to navigate.',
+      'Found the system {sentiment} to use.',
+      'User experience could be {sentiment}.',
+    ],
+    [FeedbackCategory.FUNCTIONALITY]: [
+      'The booking feature works {sentiment}.',
+      'Form submission functionality is {sentiment}.',
+      'Event registration process is {sentiment}.',
+    ],
+    [FeedbackCategory.PERFORMANCE]: [
+      'The system loads {sentiment}.',
+      'Response time is {sentiment}.',
+      'Performance could be {sentiment}.',
+    ],
+    [FeedbackCategory.DESIGN]: [
+      'The design looks {sentiment}.',
+      'Visual appeal is {sentiment}.',
+      'Layout is {sentiment}.',
+    ],
+    [FeedbackCategory.CONTENT]: [
+      'The information provided is {sentiment}.',
+      'Content quality is {sentiment}.',
+      'Documentation is {sentiment}.',
+    ],
+    [FeedbackCategory.TECHNICAL_ISSUE]: [
+      'Experienced technical issues: {issue}.',
+      'Bug found in {feature}.',
+      'System error occurred when {action}.',
+    ],
+    [FeedbackCategory.SUGGESTION]: [
+      'Suggestion: {suggestion}.',
+      'Would be great if {improvement}.',
+      'Consider adding {feature}.',
+    ],
+    [FeedbackCategory.COMPLAINT]: [
+      'Complaint about {issue}.',
+      'Dissatisfied with {service}.',
+      'Problem with {feature}.',
+    ],
+    [FeedbackCategory.COMPLIMENT]: [
+      'Great work on {feature}!',
+      'Excellent service provided.',
+      'Very satisfied with {aspect}.',
+    ],
+  }
+
+  // Keywords for different categories
+  const categoryKeywords = {
+    [FeedbackCategory.GENERAL]: ['system', 'experience', 'overall', 'service'],
+    [FeedbackCategory.USER_EXPERIENCE]: ['interface', 'navigation', 'usability', 'user-friendly'],
+    [FeedbackCategory.FUNCTIONALITY]: ['feature', 'function', 'work', 'process'],
+    [FeedbackCategory.PERFORMANCE]: ['speed', 'loading', 'response', 'performance'],
+    [FeedbackCategory.DESIGN]: ['design', 'layout', 'visual', 'appearance'],
+    [FeedbackCategory.CONTENT]: ['information', 'content', 'documentation', 'details'],
+    [FeedbackCategory.TECHNICAL_ISSUE]: ['error', 'bug', 'issue', 'problem'],
+    [FeedbackCategory.SUGGESTION]: ['suggestion', 'improvement', 'enhancement', 'feature'],
+    [FeedbackCategory.COMPLAINT]: ['complaint', 'problem', 'issue', 'dissatisfied'],
+    [FeedbackCategory.COMPLIMENT]: ['great', 'excellent', 'satisfied', 'good'],
+  }
+
+  for (let i = 0; i < feedbackCount; i++) {
+    // Select random category
+    const category = feedbackCategories[Math.floor(Math.random() * feedbackCategories.length)]
+
+    // Select random sentiment (weighted towards positive and neutral)
+    let sentiment
+    const sentimentRand = Math.random()
+    if (sentimentRand < 0.4) {
+      sentiment = SentimentType.POSITIVE
+    } else if (sentimentRand < 0.7) {
+      sentiment = SentimentType.NEUTRAL
+    } else if (sentimentRand < 0.9) {
+      sentiment = SentimentType.NEGATIVE
+    } else {
+      sentiment = SentimentType.MIXED
+    }
+
+    // Generate title and content based on category and sentiment
+    const templates = feedbackTemplates[category]
+    const template = templates[Math.floor(Math.random() * templates.length)]
+
+    let content = template
+    if (template.includes('{sentiment}')) {
+      const sentimentWords = {
+        [SentimentType.POSITIVE]: ['great', 'excellent', 'good', 'satisfactory'],
+        [SentimentType.NEGATIVE]: ['poor', 'bad', 'difficult', 'frustrating'],
+        [SentimentType.NEUTRAL]: ['okay', 'average', 'moderate', 'acceptable'],
+        [SentimentType.MIXED]: ['mixed', 'varied', 'inconsistent'],
+      }
+      const sentimentWord = sentimentWords[sentiment][Math.floor(Math.random() * sentimentWords[sentiment].length)]
+      content = template.replace('{sentiment}', sentimentWord)
+    }
+
+    // Replace other placeholders
+    content = content
+      .replace('{issue}', faker.lorem.words(3))
+      .replace('{feature}', faker.lorem.words(2))
+      .replace('{action}', faker.lorem.words(3))
+      .replace('{suggestion}', faker.lorem.sentence())
+      .replace('{improvement}', faker.lorem.words(4))
+      .replace('{service}', faker.lorem.words(2))
+      .replace('{aspect}', faker.lorem.words(2))
+
+    // Add more detailed content
+    content += ' ' + faker.lorem.paragraph()
+
+    // Generate title
+    const title = `${category.replace('_', ' ')} Feedback - ${faker.lorem.words(3)}`
+
+    // Generate rating (1-5) based on sentiment
+    let rating = null
+    if (Math.random() > 0.3) {
+      // 70% chance to have rating
+      switch (sentiment) {
+        case SentimentType.POSITIVE:
+          rating = 4 + Math.floor(Math.random() * 2) // 4-5
+          break
+        case SentimentType.NEUTRAL:
+          rating = 3 + Math.floor(Math.random() * 2) // 3-4
+          break
+        case SentimentType.NEGATIVE:
+          rating = 1 + Math.floor(Math.random() * 2) // 1-2
+          break
+        case SentimentType.MIXED:
+          rating = 2 + Math.floor(Math.random() * 3) // 2-4
+          break
+      }
+    }
+
+    // Generate AI analysis data
+    const confidence = 0.7 + Math.random() * 0.3 // 0.7-1.0
+    const keywords = categoryKeywords[category].slice(0, 2 + Math.floor(Math.random() * 3))
+
+    const aiAnalysis = {
+      model: 'gpt-4',
+      version: '1.0',
+      analysis: {
+        sentiment: sentiment,
+        confidence: confidence,
+        keywords: keywords,
+        summary: faker.lorem.sentence(),
+        suggestions: Math.random() > 0.5 ? [faker.lorem.sentence()] : [],
+      },
+      timestamp: new Date().toISOString(),
+    }
+
+    // Select status (weighted distribution)
+    let status
+    const statusRand = Math.random()
+    if (statusRand < 0.3) {
+      status = FeedbackStatus.SUBMITTED
+    } else if (statusRand < 0.5) {
+      status = FeedbackStatus.UNDER_REVIEW
+    } else if (statusRand < 0.7) {
+      status = FeedbackStatus.IN_PROGRESS
+    } else if (statusRand < 0.9) {
+      status = FeedbackStatus.RESOLVED
+    } else {
+      status = FeedbackStatus.CLOSED
+    }
+
+    // Select random student
+    const student = students[Math.floor(Math.random() * students.length)]
+
+    // Select operator for review (if status requires it)
+    let reviewedByOperator = null
+    let reviewedAt = null
+    if (status !== FeedbackStatus.SUBMITTED && operators.length > 0) {
+      reviewedByOperator = operators[Math.floor(Math.random() * operators.length)]
+      reviewedAt = randomDate(addDays(new Date(), -30), new Date())
+    }
+
+    // Create metadata
+    const metadata = {
+      source: Math.random() > 0.5 ? 'web' : 'mobile',
+      browser: Math.random() > 0.5 ? 'Chrome' : 'Safari',
+      userAgent: faker.internet.userAgent(),
+      ipAddress: faker.internet.ip(),
+      tags: [category.toLowerCase(), sentiment.toLowerCase()],
+    }
+
+    try {
+      // Create the feedback
+      const feedback = await prisma.feedback.create({
+        data: {
+          title,
+          content,
+          category,
+          rating,
+          sentiment,
+          confidence,
+          keywords,
+          aiAnalysis,
+          status,
+          reviewedAt,
+          reviewedByOperatorId: reviewedByOperator?.id,
+          metadata,
+          studentId: student.id,
+        },
+      })
+
+      // Create responses for some feedback (30% chance)
+      if (Math.random() > 0.7 && reviewedByOperator) {
+        const responseCount = 1 + Math.floor(Math.random() * 3) // 1-3 responses
+
+        for (let j = 0; j < responseCount; j++) {
+          const isInternal = Math.random() > 0.7 // 30% chance internal note
+          const responseContent = isInternal ? faker.lorem.sentence() + ' [INTERNAL NOTE]' : faker.lorem.paragraph()
+
+          await prisma.feedbackResponse.create({
+            data: {
+              content: responseContent,
+              isInternal,
+              feedbackId: feedback.id,
+              operatorId: reviewedByOperator.id,
+            },
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create feedback:', error)
+    }
+  }
+
+  console.log('FEEDBACK SEED DATA COMPLETED!')
+}
+
+// Create Feedback Analytics Data
+async function createFeedbackAnalyticsData() {
+  console.log('CREATING FEEDBACK ANALYTICS SEED DATA...')
+
+  const feedbackCategories = Object.values(FeedbackCategory)
+  const sentimentTypes = Object.values(SentimentType)
+
+  // Generate analytics for the last 30 days
+  const today = new Date()
+
+  for (let day = 0; day < 30; day++) {
+    const date = addDays(today, -day)
+
+    for (const category of feedbackCategories) {
+      for (const sentiment of sentimentTypes) {
+        // Generate random count (0-10 per category/sentiment per day)
+        const count = Math.floor(Math.random() * 11)
+
+        if (count > 0) {
+          // Calculate average rating based on sentiment
+          let avgRating = null
+          if (Math.random() > 0.3) {
+            // 70% chance to have rating data
+            switch (sentiment) {
+              case SentimentType.POSITIVE:
+                avgRating = 4.0 + Math.random() * 1.0 // 4.0-5.0
+                break
+              case SentimentType.NEUTRAL:
+                avgRating = 3.0 + Math.random() * 1.0 // 3.0-4.0
+                break
+              case SentimentType.NEGATIVE:
+                avgRating = 1.0 + Math.random() * 1.0 // 1.0-2.0
+                break
+              case SentimentType.MIXED:
+                avgRating = 2.0 + Math.random() * 2.0 // 2.0-4.0
+                break
+            }
+          }
+
+          const totalResponses = Math.floor(Math.random() * (count + 1)) // 0 to count
+
+          try {
+            await prisma.feedbackAnalytics.create({
+              data: {
+                date,
+                category,
+                sentiment,
+                count,
+                avgRating,
+                totalResponses,
+              },
+            })
+          } catch (error) {
+            // Ignore unique constraint violations (same date/category/sentiment combination)
+            if (!error.message.includes('Unique constraint')) {
+              console.error('Failed to create feedback analytics:', error)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  console.log('FEEDBACK ANALYTICS SEED DATA COMPLETED!')
+}
+
 main()
   .then(async () => {
     // Create notifications after other seed data
     await createNotificationsData()
+    // Create feedback data
+    await createFeedbackData()
+    // Create feedback analytics data
+    await createFeedbackAnalyticsData()
     await prisma.$disconnect()
   })
   .catch(async (e) => {

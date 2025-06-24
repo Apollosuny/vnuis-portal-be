@@ -31,7 +31,7 @@ import { CurUser } from '@app/core/decorators/user.decorator'
 import { UserEntity } from '@app/user/entities/user.entity'
 import { ThrottlerGuard } from '@nestjs/throttler'
 
-@UseGuards(ThrottlerGuard)
+// @UseGuards(ThrottlerGuard)
 @ApiTags('Feedback')
 @Controller('feedback')
 @UseGuards(JwtGuard)

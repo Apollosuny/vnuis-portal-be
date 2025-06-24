@@ -13,6 +13,10 @@ import { AdministrativeProceduresFormSubmissionModule } from '@app/administrativ
 import { EventModule } from '@app/event'
 import { FileModule } from '@app/file'
 import { NotificationModule } from '@app/notification'
+import { FeedbackModule } from '@app/feedback'
+import { FeedbackResponseModule } from '@app/feedback-response'
+import { FeedbackAnalyticsModule } from '@app/feedback-analytics'
+import { AiModule } from '@app/ai'
 
 @Module({
   imports: [
@@ -29,6 +33,10 @@ import { NotificationModule } from '@app/notification'
     AdministrativeProceduresFormSubmissionModule,
     EventModule,
     NotificationModule,
+    FeedbackModule,
+    FeedbackResponseModule,
+    FeedbackAnalyticsModule,
+    AiModule,
   ],
   controllers: [],
   providers: [],
