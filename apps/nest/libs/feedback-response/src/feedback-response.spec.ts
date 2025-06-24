@@ -32,7 +32,12 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
     operatorContext = tc.buildUserContext(operatorData.tokenInfo)
   })
 
-  afterAll(async () => await tc?.clean())
+  afterAll(async () => {
+    // Clean up in correct order to avoid foreign key constraints
+    await prismaService.feedbackResponse.deleteMany()
+    await prismaService.feedback.deleteMany()
+    await tc?.clean()
+  })
 
   describe('Feedback CRUD Operations', () => {
     test('Create:TitleIsRequired', async () => {
@@ -52,7 +57,7 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
           title: 'Test',
           content: 'Test content',
         } as CreateFeedbackDto)
-      expect(res).toBeBad(/category should not be empty/)
+      expect(res).toBeBad(/category must be one of the following values/)
     })
 
     test('Create:Success', async () => {
@@ -104,14 +109,14 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
 
     test('CreateResponse:ContentIsRequired', async () => {
       const res = await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}`))
+        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}/responses`))
         .send({} as CreateFeedbackResponseDto)
       expect(res).toBeBad(/content should not be empty/)
     })
 
     test('CreateResponse:Success', async () => {
       const res = await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}`))
+        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}/responses`))
         .send({
           content: 'Thank you for your feedback. We will review it.',
           isInternal: false,
@@ -147,7 +152,7 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
     test('GetResponsesByFeedbackId:IncludeInternal', async () => {
       // Create an internal response
       await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}`))
+        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}/responses`))
         .send({
           content: 'Internal note for admin',
           isInternal: true,
@@ -200,7 +205,7 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
 
     test('OperatorCanRespondToFeedback', async () => {
       const res = await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}`))
+        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}/responses`))
         .send({
           content: 'Operator response to student feedback',
           isInternal: false,
@@ -211,7 +216,7 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
 
     test('OperatorCanCreateInternalNote', async () => {
       const res = await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}`))
+        .request((r) => r.post(`/feedback-response/feedback/${feedback.id}/responses`))
         .send({
           content: 'Internal note for admin team',
           isInternal: true,
@@ -233,7 +238,7 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
     test('CreateResponse:FeedbackNotFound', async () => {
       const fakeFeedbackId = '00000000-0000-0000-0000-000000000000'
       const res = await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${fakeFeedbackId}`))
+        .request((r) => r.post(`/feedback-response/feedback/${fakeFeedbackId}/responses`))
         .send({
           content: 'Test response',
           isInternal: false,
@@ -252,7 +257,7 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
         } as CreateFeedbackDto)
 
       const responseRes = await operatorContext
-        .request((r) => r.post(`/feedback-response/feedback/${feedbackRes.body.id}`))
+        .request((r) => r.post(`/feedback-response/feedback/${feedbackRes.body.id}/responses`))
         .send({
           content: 'Test response',
           isInternal: false,
@@ -290,20 +295,6 @@ describe('Feedback & FeedbackResponse Integration Spec', () => {
         const res = await operatorContext.request((r) => r.get(`/feedback-response/operator/${operatorId}`))
         expect(res).toBeOK()
       }
-    })
-  })
-
-  describe('Test Endpoints', () => {
-    test('FeedbackTestEndpoint', async () => {
-      const res = await operatorContext.request((r) => r.get('/feedback/admin/test'))
-      expect(res).toBeOK()
-      expect(res.body.message).toBe('Feedback module is working')
-    })
-
-    test('FeedbackResponseTestEndpoint', async () => {
-      const res = await operatorContext.request((r) => r.get('/feedback-response/admin/test'))
-      expect(res).toBeOK()
-      expect(res.body.message).toBe('Feedback Response module is working')
     })
   })
 })

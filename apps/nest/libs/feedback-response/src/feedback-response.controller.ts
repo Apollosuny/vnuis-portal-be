@@ -142,11 +142,4 @@ export class FeedbackResponseController {
   getResponsesByOperator(@Param('operatorId', ParseUUIDPipe) operatorId: string) {
     return this.feedbackResponseService.getResponsesByOperator(operatorId)
   }
-
-  // Test endpoint
-  @Get('admin/test')
-  @ApiBearerAuth()
-  test() {
-    return { message: 'Feedback Response module is working' }
-  }
 }
