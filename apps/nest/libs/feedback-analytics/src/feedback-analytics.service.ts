@@ -4,6 +4,11 @@ import { QueryFeedbackAnalyticsDto } from './dtos/query-feedback-analytics.dto'
 import { th } from '@app/helper/transform.helper'
 import { FeedbackAnalyticsEntity } from './entities/feedback-analytics.entity'
 import { DateTime } from 'luxon'
+import { CategoryAnalysisDto } from './dtos/category-analysis.dto'
+import { DashboardOverviewDto } from './dtos/dashboard-overview.dto'
+import { SentimentAnalysisDto } from './dtos/sentiment-analysis.dto'
+import { ResponseTimeAnalysisDto } from './dtos/response-time-analysis.dto'
+import { RatingAnalysisDto } from './dtos/rating-analysis.dto'
 
 @Injectable()
 export class FeedbackAnalyticsService {
@@ -13,8 +18,16 @@ export class FeedbackAnalyticsService {
     const { select, startDate, endDate } = queryDto
     const where: any = {}
 
-    if (startDate) where.date.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.date.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.date = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.date) {
+        where.date.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.date = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const analytics = await this.prisma.feedbackAnalytics.findMany({
       where,
@@ -57,8 +70,16 @@ export class FeedbackAnalyticsService {
   // Dashboard Overview Analytics
   async getDashboardOverview(startDate?: string, endDate?: string) {
     const where: any = {}
-    if (startDate) where.createdAt.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.createdAt = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.createdAt) {
+        where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.createdAt = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const [totalFeedbacks, positiveFeedbacks, negativeFeedbacks, neutralFeedbacks, averageRating, responseCount] =
       await Promise.all([
@@ -83,26 +104,33 @@ export class FeedbackAnalyticsService {
         }),
       ])
 
-    return {
+    return th.toInstanceUnsafe(DashboardOverviewDto, {
       totalFeedbacks,
-      positiveFeedbacks,
-      negativeFeedbacks,
-      neutralFeedbacks,
-      averageRating: averageRating._avg.rating || 0,
-      responseRate: totalFeedbacks > 0 ? (responseCount / totalFeedbacks) * 100 : 0,
+      totalResponses: responseCount,
+      avgRating: averageRating._avg.rating || 0,
       sentimentDistribution: {
         positive: totalFeedbacks > 0 ? (positiveFeedbacks / totalFeedbacks) * 100 : 0,
         negative: totalFeedbacks > 0 ? (negativeFeedbacks / totalFeedbacks) * 100 : 0,
         neutral: totalFeedbacks > 0 ? (neutralFeedbacks / totalFeedbacks) * 100 : 0,
       },
-    }
+      categoryDistribution: [],
+      recentTrends: [],
+    })
   }
 
   // Sentiment Analysis
   async getSentimentAnalysis(startDate?: string, endDate?: string) {
     const where: any = {}
-    if (startDate) where.createdAt.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.createdAt = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.createdAt) {
+        where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.createdAt = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const sentimentStats = await this.prisma.feedback.groupBy({
       by: ['sentiment'],
@@ -117,17 +145,25 @@ export class FeedbackAnalyticsService {
       _count: { id: true },
     })
 
-    return {
-      sentimentStats,
-      sentimentTrends,
-    }
+    return th.toInstanceSafe(SentimentAnalysisDto, {
+      distribution: sentimentStats,
+      trends: sentimentTrends,
+    })
   }
 
   // Category Analysis
   async getCategoryAnalysis(startDate?: string, endDate?: string) {
     const where: any = {}
-    if (startDate) where.createdAt.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.createdAt = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.createdAt) {
+        where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.createdAt = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const categoryStats = await this.prisma.feedback.groupBy({
       by: ['category'],
@@ -136,14 +172,25 @@ export class FeedbackAnalyticsService {
       _avg: { rating: true },
     })
 
-    return categoryStats
+    return th.toInstanceUnsafe(CategoryAnalysisDto, {
+      distribution: categoryStats,
+      trends: [],
+    })
   }
 
   // Response Time Analysis
   async getResponseTimeAnalysis(startDate?: string, endDate?: string) {
     const where: any = {}
-    if (startDate) where.createdAt.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.createdAt = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.createdAt) {
+        where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.createdAt = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const feedbacksWithResponses = await this.prisma.feedback.findMany({
       where: { ...where, responses: { some: {} } },
@@ -169,7 +216,7 @@ export class FeedbackAnalyticsService {
     const averageResponseTime =
       responseTimes.length > 0 ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length : 0
 
-    return {
+    return th.toInstanceSafe(ResponseTimeAnalysisDto, {
       averageResponseTime,
       responseTimeDistribution: {
         under1Hour: responseTimes.filter((time) => time < 1).length,
@@ -177,14 +224,23 @@ export class FeedbackAnalyticsService {
         under72Hours: responseTimes.filter((time) => time < 72).length,
         over72Hours: responseTimes.filter((time) => time >= 72).length,
       },
-    }
+      totalResponded: feedbacksWithResponses.length,
+    })
   }
 
   // Rating Analysis
   async getRatingAnalysis(startDate?: string, endDate?: string) {
     const where: any = {}
-    if (startDate) where.createdAt.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.createdAt = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.createdAt) {
+        where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.createdAt = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const ratingStats = await this.prisma.feedback.groupBy({
       by: ['rating'],
@@ -197,17 +253,25 @@ export class FeedbackAnalyticsService {
       _avg: { rating: true },
     })
 
-    return {
-      ratingDistribution: ratingStats,
-      averageRating: averageRating._avg.rating || 0,
-    }
+    return th.toInstanceUnsafe(RatingAnalysisDto, {
+      distribution: ratingStats,
+      average: averageRating._avg.rating || 0,
+    })
   }
 
   // Trend Analysis
   async getTrendAnalysis(startDate?: string, endDate?: string) {
     const where: any = {}
-    if (startDate) where.createdAt.gte = DateTime.fromISO(startDate).toJSDate()
-    if (endDate) where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+    if (startDate) {
+      where.createdAt = { gte: DateTime.fromISO(startDate).toJSDate() }
+    }
+    if (endDate) {
+      if (where.createdAt) {
+        where.createdAt.lte = DateTime.fromISO(endDate).toJSDate()
+      } else {
+        where.createdAt = { lte: DateTime.fromISO(endDate).toJSDate() }
+      }
+    }
 
     const trends = await this.prisma.feedback.groupBy({
       by: ['createdAt'],

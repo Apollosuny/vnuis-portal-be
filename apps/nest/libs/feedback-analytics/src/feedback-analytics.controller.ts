@@ -21,6 +21,7 @@ import { DateTime } from 'luxon'
 import { ApiTags, ApiBearerAuth, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger'
 import { AppCacheInterceptor } from '@app/core/interceptors/app-cache-interceptor'
 import { AppCacheKey } from '@app/core/decorators/app-cache-key.decorator'
+import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
 
 @ApiTags('Feedback Analytics')
 @Controller('feedback-analytics')
@@ -37,11 +38,23 @@ export class FeedbackAnalyticsController {
     return th.toInstancesSafe(FeedbackAnalyticsEntity, analytics)
   }
 
-  @Get('dashboard')
+  @Get('dashboard/overview')
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
   async getDashboardOverview(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const start = startDate ? DateTime.fromISO(startDate) : undefined
+    const end = endDate ? DateTime.fromISO(endDate) : undefined
+    const result = await this.feedbackAnalyticsService.getDashboardOverview(start?.toISO(), end?.toISO())
+
+    return result
+  }
+
+  @Get('dashboard')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  @UseInterceptors(AppCacheInterceptor)
+  async getDashboard(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
     return await this.feedbackAnalyticsService.getDashboardOverview(start?.toISO(), end?.toISO())
@@ -57,7 +70,7 @@ export class FeedbackAnalyticsController {
     return await this.feedbackAnalyticsService.getDashboardOverview(start?.toISO(), end?.toISO())
   }
 
-  @Get('sentiment')
+  @Get('sentiment/analysis')
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
@@ -67,17 +80,38 @@ export class FeedbackAnalyticsController {
     return await this.feedbackAnalyticsService.getSentimentAnalysis(start?.toISO(), end?.toISO())
   }
 
-  @Get('category')
+  @Get('sentiment')
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
+  async getSentiment(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const start = startDate ? DateTime.fromISO(startDate) : undefined
+    const end = endDate ? DateTime.fromISO(endDate) : undefined
+    return await this.feedbackAnalyticsService.getSentimentAnalysis(start?.toISO(), end?.toISO())
+  }
+
+  @Get('category/analysis')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   async getCategoryAnalysis(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
     return await this.feedbackAnalyticsService.getCategoryAnalysis(start?.toISO(), end?.toISO())
   }
 
-  @Get('response-time')
+  @Get('category')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  @UseInterceptors(AppCacheInterceptor)
+  async getCategory(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const start = startDate ? DateTime.fromISO(startDate) : undefined
+    const end = endDate ? DateTime.fromISO(endDate) : undefined
+    return await this.feedbackAnalyticsService.getCategoryAnalysis(start?.toISO(), end?.toISO())
+  }
+
+  @Get('response-time/analysis')
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
@@ -87,7 +121,17 @@ export class FeedbackAnalyticsController {
     return await this.feedbackAnalyticsService.getResponseTimeAnalysis(start?.toISO(), end?.toISO())
   }
 
-  @Get('rating')
+  @Get('response-time')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  @UseInterceptors(AppCacheInterceptor)
+  async getResponseTime(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const start = startDate ? DateTime.fromISO(startDate) : undefined
+    const end = endDate ? DateTime.fromISO(endDate) : undefined
+    return await this.feedbackAnalyticsService.getResponseTimeAnalysis(start?.toISO(), end?.toISO())
+  }
+
+  @Get('rating/analysis')
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
@@ -97,11 +141,35 @@ export class FeedbackAnalyticsController {
     return await this.feedbackAnalyticsService.getRatingAnalysis(start?.toISO(), end?.toISO())
   }
 
+  @Get('rating')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  @UseInterceptors(AppCacheInterceptor)
+  async getRating(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const start = startDate ? DateTime.fromISO(startDate) : undefined
+    const end = endDate ? DateTime.fromISO(endDate) : undefined
+    return await this.feedbackAnalyticsService.getRatingAnalysis(start?.toISO(), end?.toISO())
+  }
+
+  @Get('trends/analysis')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  @UseInterceptors(AppCacheInterceptor)
+  async getTrendAnalysis(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('interval') interval?: string,
+  ) {
+    const start = startDate ? DateTime.fromISO(startDate) : undefined
+    const end = endDate ? DateTime.fromISO(endDate) : undefined
+    return await this.feedbackAnalyticsService.getTrendAnalysis(start?.toISO(), end?.toISO())
+  }
+
   @Get('trends')
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
-  async getTrendAnalysis(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+  async getTrends(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
     return await this.feedbackAnalyticsService.getTrendAnalysis(start?.toISO(), end?.toISO())
@@ -123,13 +191,12 @@ export class FeedbackAnalyticsController {
     return await this.feedbackAnalyticsService.getMonthlyTrends(months)
   }
 
-  @Get(':id')
+  @Get('generate')
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => FeedbackAnalyticsEntity })
-  @AppCacheKey((req) => `feedback-analytics-${req.params.id}`)
-  @UseInterceptors(AppCacheInterceptor)
-  async getFeedbackAnalyticsById(@Param('id', ParseUUIDPipe) id: string) {
-    const analytics = await this.feedbackAnalyticsService.getFeedbackAnalyticsById(id)
+  async generateAnalyticsDataGet(@Query('date') date: string) {
+    const targetDate = date ? DateTime.fromISO(date) : DateTime.now()
+    const analytics = await this.feedbackAnalyticsService.generateAnalyticsData(targetDate)
     return th.toInstanceSafe(FeedbackAnalyticsEntity, analytics)
   }
 
@@ -142,10 +209,13 @@ export class FeedbackAnalyticsController {
     return th.toInstanceSafe(FeedbackAnalyticsEntity, analytics)
   }
 
-  // Test endpoint
-  @Get('admin/test')
+  @Get(':id')
   @ApiBearerAuth()
-  test() {
-    return { message: 'Feedback Analytics module is working' }
+  @ApiOkResponse({ type: () => FeedbackAnalyticsEntity })
+  @AppCacheKey((req) => `feedback-analytics-${req.params.id}`)
+  @UseInterceptors(AppCacheInterceptor)
+  async getFeedbackAnalyticsById(@Param('id', ParseUUIDPipe) id: string) {
+    const analytics = await this.feedbackAnalyticsService.getFeedbackAnalyticsById(id)
+    return th.toInstanceSafe(FeedbackAnalyticsEntity, analytics)
   }
 }
