@@ -7,10 +7,14 @@ import { User, FeedbackStatus, SentimentType } from '@prisma/client'
 import { th } from '@app/helper/transform.helper'
 import { FeedbackEntity } from './entities/feedback.entity'
 import { DateTime } from 'luxon'
+import { AiService } from 'libs/ai/src'
 
 @Injectable()
 export class FeedbackService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiService,
+  ) {}
 
   async getFeedbacks(queryFeedbackDto: QueryFeedbackDto) {
     const { select, include } = queryFeedbackDto
@@ -67,8 +71,10 @@ export class FeedbackService {
       },
     })
 
-    // TODO: Trigger AI sentiment analysis
-    // await this.analyzeSentiment(feedback.id)
+    // Trigger AI sentiment analysis asynchronously
+    this.analyzeSentiment(feedback.id).catch((error) => {
+      console.error('AI analysis failed:', error)
+    })
 
     return th.toInstanceSafe(FeedbackEntity, feedback)
   }
@@ -146,29 +152,108 @@ export class FeedbackService {
       throw new Error('Feedback not found')
     }
 
-    // TODO: Implement AI sentiment analysis
-    // This is a placeholder for the AI analysis
-    const aiResult = {
-      sentiment: 'POSITIVE' as SentimentType,
-      confidence: 0.85,
-      keywords: ['good', 'experience', 'helpful'],
-      analysis: {
-        positive_score: 0.85,
-        negative_score: 0.05,
-        neutral_score: 0.1,
-      },
+    // Use AI service for sentiment analysis
+    const aiResult = await this.aiService.analyzeFeedback({
+      title: feedback.title,
+      content: feedback.content,
+      category: feedback.category,
+      rating: feedback.rating || undefined,
+    })
+
+    if (!aiResult) {
+      // Fallback to basic analysis if AI is not available
+      const fallbackResult = {
+        sentiment: 'NEUTRAL' as SentimentType,
+        confidence: 0.5,
+        keywords: [],
+        aiAnalysis: {
+          message: 'AI analysis not available',
+          fallback: true,
+        },
+      }
+
+      const updatedFeedback = await this.prisma.feedback.update({
+        where: { id: feedbackId },
+        data: {
+          sentiment: fallbackResult.sentiment,
+          confidence: fallbackResult.confidence,
+          keywords: fallbackResult.keywords,
+          aiAnalysis: fallbackResult.aiAnalysis,
+        },
+      })
+
+      return th.toInstanceSafe(FeedbackEntity, updatedFeedback)
     }
 
+    // Update feedback with AI analysis results
     const updatedFeedback = await this.prisma.feedback.update({
       where: { id: feedbackId },
       data: {
-        sentiment: aiResult.sentiment,
+        sentiment: aiResult.sentiment as SentimentType,
         confidence: aiResult.confidence,
         keywords: aiResult.keywords,
-        aiAnalysis: aiResult.analysis,
+        aiAnalysis: {
+          sentiment: aiResult.sentiment,
+          confidence: aiResult.confidence,
+          keywords: aiResult.keywords,
+          category: aiResult.category,
+          summary: aiResult.summary,
+          suggestions: aiResult.suggestions,
+          rawResponse: aiResult.rawResponse,
+          analyzedAt: new Date().toISOString(),
+        },
       },
     })
 
     return th.toInstanceSafe(FeedbackEntity, updatedFeedback)
+  }
+
+  // Generate AI response suggestion
+  async generateResponseSuggestion(feedbackId: string) {
+    const feedback = await this.prisma.feedback.findUnique({
+      where: { id: feedbackId },
+    })
+
+    if (!feedback) {
+      throw new Error('Feedback not found')
+    }
+
+    const suggestion = await this.aiService.generateResponseSuggestion(`${feedback.title}\n\n${feedback.content}`)
+
+    return {
+      suggestion,
+      feedbackId,
+      generatedAt: new Date().toISOString(),
+    }
+  }
+
+  // Auto-categorize feedback using AI
+  async autoCategorizeFeedback(feedbackId: string) {
+    const feedback = await this.prisma.feedback.findUnique({
+      where: { id: feedbackId },
+    })
+
+    if (!feedback) {
+      throw new Error('Feedback not found')
+    }
+
+    const suggestedCategory = await this.aiService.categorizeFeedback(feedback.title, feedback.content)
+
+    if (suggestedCategory && suggestedCategory !== feedback.category) {
+      const updatedFeedback = await this.prisma.feedback.update({
+        where: { id: feedbackId },
+        data: {
+          category: suggestedCategory as any,
+          aiAnalysis: {
+            suggestedCategory,
+            categorizedAt: new Date().toISOString(),
+          },
+        },
+      })
+
+      return th.toInstanceSafe(FeedbackEntity, updatedFeedback)
+    }
+
+    return th.toInstanceSafe(FeedbackEntity, feedback)
   }
 }

@@ -29,7 +29,9 @@ import { AppCacheKey } from '@app/core/decorators/app-cache-key.decorator'
 import { FeedbackStatus } from '@prisma/client'
 import { CurUser } from '@app/core/decorators/user.decorator'
 import { UserEntity } from '@app/user/entities/user.entity'
+import { ThrottlerGuard } from '@nestjs/throttler'
 
+@UseGuards(ThrottlerGuard)
 @ApiTags('Feedback')
 @Controller('feedback')
 @UseGuards(JwtGuard)
@@ -154,6 +156,22 @@ export class FeedbackController {
   @ApiOkResponse({ type: () => FeedbackEntity })
   async analyzeSentiment(@Param('id', ParseUUIDPipe) id: string) {
     const feedback = await this.feedbackService.analyzeSentiment(id)
+    return th.toInstanceSafe(FeedbackEntity, feedback)
+  }
+
+  @Post(':id/suggest-response')
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'AI response suggestion' })
+  async generateResponseSuggestion(@Param('id', ParseUUIDPipe) id: string) {
+    const result = await this.feedbackService.generateResponseSuggestion(id)
+    return result
+  }
+
+  @Post(':id/auto-categorize')
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => FeedbackEntity })
+  async autoCategorizeFeedback(@Param('id', ParseUUIDPipe) id: string) {
+    const feedback = await this.feedbackService.autoCategorizeFeedback(id)
     return th.toInstanceSafe(FeedbackEntity, feedback)
   }
 
