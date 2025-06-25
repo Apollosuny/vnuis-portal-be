@@ -174,11 +174,4 @@ export class FeedbackController {
     const feedback = await this.feedbackService.autoCategorizeFeedback(id)
     return th.toInstanceSafe(FeedbackEntity, feedback)
   }
-
-  // Test endpoint
-  @Get('admin/test')
-  @ApiBearerAuth()
-  test() {
-    return { message: 'Feedback module is working' }
-  }
 }

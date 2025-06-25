@@ -173,6 +173,7 @@ export class FeedbackAnalyticsController {
   @ApiBearerAuth()
   @ApiOkResponse()
   @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
   async getTrends(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const start = startDate ? DateTime.fromISO(startDate) : undefined
     const end = endDate ? DateTime.fromISO(endDate) : undefined
