@@ -3,11 +3,10 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody } from '@nes
 import { JwtGuard } from '@app/auth/guards/jwt.guard'
 import { ChatbotIntentService } from './chatbot-intent.service'
 import { ChatbotResponse, ChatbotIntentRoute } from './interfaces/chatbot-intent.interface'
+import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
+import { ProcessMessageDto } from './dtos/process-message.dto'
 
 // DTOs for API documentation
-class ProcessMessageDto {
-  message: string
-}
 
 class UpdatePriorityDto {
   priority: number
@@ -29,7 +28,9 @@ export class ChatbotController {
     type: Object,
   })
   @HttpCode(HttpStatus.OK)
+  @ExposeAll()
   async processMessage(@Body() body: ProcessMessageDto): Promise<ChatbotResponse> {
+    console.log('body', body)
     return this.chatbotService.processMessage(body.message)
   }
 
@@ -37,6 +38,7 @@ export class ChatbotController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Sync intent routes from configuration to database' })
   @ApiResponse({ status: 200, description: 'Routes synced successfully' })
+  @ExposeAll()
   async syncRoutes(): Promise<{ message: string }> {
     await this.chatbotService.syncIntentRoutes()
     return { message: 'Intent routes synced successfully' }
@@ -50,6 +52,7 @@ export class ChatbotController {
     description: 'List of active intent routes',
     type: [Object],
   })
+  @ExposeAll()
   async getRoutes(): Promise<ChatbotIntentRoute[]> {
     return this.chatbotService.getActiveIntentRoutes()
   }

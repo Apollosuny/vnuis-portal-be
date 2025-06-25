@@ -5,6 +5,7 @@ import {
   IntentRouteConfig,
   IntentAnalysis,
   ChatbotResponse,
+  QuickAction,
 } from './interfaces/chatbot-intent.interface'
 import { generateIntentRoutesConfig, getRouteByIntent } from './configs/route-mapper.config'
 import { AiService } from './ai.service'
@@ -207,7 +208,21 @@ export class ChatbotIntentService implements OnModuleInit {
     // 1. Analyze intent using AI
     const intentAnalysis = await this.analyzeIntent(message)
 
-    // 2. Get the best matching route
+    // 2. Check if this is a general conversation (low confidence or no clear intent)
+    if (intentAnalysis.confidence < 0.6 || intentAnalysis.intent === 'help') {
+      // Generate a natural conversation response using AI
+      const conversationResponse = await this.generateConversationResponse(message)
+
+      return {
+        message: conversationResponse,
+        suggestedLinks: [], // No forced redirects for general conversation
+        quickActions: this.getConversationQuickActions(), // Add helpful quick actions
+        confidence: intentAnalysis.confidence,
+        intent: 'conversation',
+      }
+    }
+
+    // 3. Get the best matching route for service-related intents
     const route = await this.getIntentRouteByIntent(intentAnalysis.intent)
 
     if (!route) {
@@ -232,7 +247,7 @@ export class ChatbotIntentService implements OnModuleInit {
       }
     }
 
-    // 3. Generate response
+    // 4. Generate response for service-related intents
     return {
       message: route.responseTemplate || `Tôi sẽ đưa bạn đến ${route.routeName}.`,
       suggestedLinks: [
@@ -246,6 +261,110 @@ export class ChatbotIntentService implements OnModuleInit {
       confidence: intentAnalysis.confidence,
       intent: route.intent,
     }
+  }
+
+  /**
+   * Check if message is a simple greeting or casual conversation
+   */
+  private isSimpleGreeting(message: string): boolean {
+    const greetings = [
+      'hello',
+      'hi',
+      'hey',
+      'chào',
+      'xin chào',
+      'chào bạn',
+      'chào em',
+      'chào anh',
+      'chào chị',
+      'good morning',
+      'good afternoon',
+      'good evening',
+      'chào buổi sáng',
+      'chào buổi chiều',
+      'chào buổi tối',
+      'how are you',
+      'bạn khỏe không',
+      'em khỏe không',
+      'anh khỏe không',
+      'chị khỏe không',
+      "what's up",
+      'có gì mới',
+      'thế nào',
+      'sao rồi',
+    ]
+
+    const normalizedMessage = message.toLowerCase().trim()
+    return greetings.some((greeting) => normalizedMessage.includes(greeting))
+  }
+
+  /**
+   * Generate natural conversation response for general chat
+   */
+  private async generateConversationResponse(message: string): Promise<string> {
+    // Handle simple greetings with quick responses
+    if (this.isSimpleGreeting(message)) {
+      const greetings = [
+        'Xin chào! Rất vui được gặp bạn! 😊',
+        'Chào bạn! Tôi có thể giúp gì cho bạn hôm nay?',
+        'Xin chào! Bạn cần hỗ trợ gì không?',
+        'Chào bạn! Tôi sẵn sàng hỗ trợ bạn với các dịch vụ của trường.',
+        'Xin chào! Bạn có muốn tìm hiểu về các dịch vụ nào không?',
+      ]
+      return greetings[Math.floor(Math.random() * greetings.length)]
+    }
+
+    const prompt = `
+    You are a friendly student assistant chatbot. A student has sent you a message that doesn't seem to be about specific services (like room booking, events, forms, etc.).
+    
+    Student message: "${message}"
+    
+    Please respond naturally and conversationally in Vietnamese. You can:
+    - Greet them back if they're greeting you
+    - Ask how you can help them
+    - Have a casual conversation
+    - Be friendly and supportive
+    - If they ask about what you can do, mention that you can help with room booking, events, forms, and other student services
+    
+    Keep your response under 100 words and make it feel natural, not like a customer service bot.
+    
+    If they seem to need help with something specific, you can gently ask what they need help with.
+    `
+
+    try {
+      const aiResponse = await this.aiService.generateContent(prompt, { temperature: 0.7 })
+      if (!aiResponse) {
+        return 'Xin chào! Tôi có thể giúp gì cho bạn hôm nay?'
+      }
+
+      return aiResponse.trim()
+    } catch (error) {
+      this.logger.error('Error generating conversation response:', error)
+      return 'Xin chào! Tôi có thể giúp gì cho bạn hôm nay?'
+    }
+  }
+
+  /**
+   * Get quick actions for general conversation
+   */
+  private getConversationQuickActions(): QuickAction[] {
+    return [
+      {
+        label: 'Đặt phòng',
+        action: 'navigate',
+        route: '/student-dashboard/rooms',
+      },
+      {
+        label: 'Xem sự kiện',
+        action: 'navigate',
+        route: '/student-dashboard/events',
+      },
+      {
+        label: 'Nộp đơn',
+        action: 'navigate',
+        route: '/student-dashboard/forms',
+      },
+    ]
   }
 
   /**
@@ -272,7 +391,13 @@ export class ChatbotIntentService implements OnModuleInit {
       }
     }
     
-    If no clear intent is found, use "help" as the intent with lower confidence.
+    IMPORTANT GUIDELINES:
+    - Only match to specific intents if the message clearly relates to services (room booking, events, forms, etc.)
+    - If the message is just general conversation (greetings, casual chat, questions not about services), use "help" with low confidence (< 0.6)
+    - Examples of general conversation: "hello", "hi", "how are you", "what's up", "thanks", etc.
+    - Examples of service-related: "book a room", "view events", "submit form", "cancel booking", etc.
+    
+    If no clear service-related intent is found, use "help" as the intent with confidence < 0.6.
     `
 
     try {
