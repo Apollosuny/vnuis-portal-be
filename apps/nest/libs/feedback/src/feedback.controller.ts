@@ -29,7 +29,8 @@ import { AppCacheKey } from '@app/core/decorators/app-cache-key.decorator'
 import { FeedbackStatus } from '@prisma/client'
 import { CurUser } from '@app/core/decorators/user.decorator'
 import { UserEntity } from '@app/user/entities/user.entity'
-import { ThrottlerGuard } from '@nestjs/throttler'
+import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
+import { RawQuery } from '@app/core/decorators/query.decorator'
 
 // @UseGuards(ThrottlerGuard)
 @ApiTags('Feedback')
@@ -42,61 +43,9 @@ export class FeedbackController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => FeedbackEntity, isArray: true })
   @UseInterceptors(AppCacheInterceptor)
-  async getFeedbacks(@Query() queryFeedbackDto: QueryFeedbackDto) {
-    const feedbacks = await this.feedbackService.getFeedbacks(queryFeedbackDto)
-    return th.toInstancesSafe(FeedbackEntity, feedbacks)
-  }
-
-  @Get('search')
-  async searchFeedbacks(
-    @Query('q') query: string,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @Query('category') category: string,
-    @Query('sentiment') sentiment: string,
-    @Query('status') status: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ) {
-    const where: any = {}
-
-    if (query) {
-      where.OR = [
-        { title: { contains: query, mode: 'insensitive' } },
-        { content: { contains: query, mode: 'insensitive' } },
-      ]
-    }
-
-    if (category) {
-      where.category = category
-    }
-
-    if (sentiment) {
-      where.sentiment = sentiment
-    }
-
-    if (status) {
-      where.status = status
-    }
-
-    if (startDate && endDate) {
-      const start = DateTime.fromISO(startDate).startOf('day').toJSDate()
-      const end = DateTime.fromISO(endDate).endOf('day').toJSDate()
-      where.createdAt = {
-        gte: start,
-        lte: end,
-      }
-    }
-
-    const queryDto: QueryFeedbackDto = {
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      sort: { createdAt: 'desc' },
-    }
-
-    const feedbacks = await this.feedbackService.getFeedbacks(queryDto)
-    return th.toInstancesSafe(FeedbackEntity, feedbacks)
+  @ExposeAll()
+  async getFeedbacks(@RawQuery() queryFeedbackDto: QueryFeedbackDto) {
+    return await this.feedbackService.getFeedbacks(queryFeedbackDto)
   }
 
   @Get(':id')

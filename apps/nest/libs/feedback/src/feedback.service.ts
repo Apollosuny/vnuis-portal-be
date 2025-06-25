@@ -29,7 +29,21 @@ export class FeedbackService {
           ? { include: Object.fromEntries(include.map((key) => [key, true])) }
           : {}),
     })
-    return th.toInstancesSafe(FeedbackEntity, feedbacks)
+
+    const total = await this.prisma.feedback.count({
+      where: queryFeedbackDto.where,
+    })
+
+    const totalPages = Math.ceil(total / queryFeedbackDto.take)
+    const totalItems = total
+    const currentPage = Math.floor((queryFeedbackDto.skip || 0) / (queryFeedbackDto.take || 1)) + 1
+
+    return {
+      data: th.toInstancesSafe(FeedbackEntity, feedbacks),
+      totalItems,
+      totalPages,
+      currentPage,
+    }
   }
 
   async getFeedback(id: string) {
