@@ -9,14 +9,11 @@ new CdkStack(
   'be-boilerplate-prd',
   {
     env: 'prd',
-    STORAGE_BUCKET: 'be-boilerplate-prd-storage',
     name: 'be-boilerplate',
     ORIGINS: ['http://localhost:3000'],
+    SECRET_ARN: 'arn:aws:secretsmanager:ap-southeast-1:182399686191:secret:istech-secret-prd-XXXXX',
   },
   {
-    env: {
-      account: '182399686191',
-      region: 'ap-southeast-1',
-    },
+    env: { account: '390844773626', region: 'ap-southeast-2' },
   },
 )

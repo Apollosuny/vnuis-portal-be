@@ -10,9 +10,13 @@
     "test": "jest",
     "cdk": "cdk",
     "dev": "",
-    "bootstrap:dev": "cdk bootstrap --app \"npx ts-node --prefer-ts-exts bin/cdk.dev.ts\" --profile cyberk",
-    "deploy:dev:local": "dotenv -e .env.dev -- cdk deploy --require-approval never --app \"npx ts-node --prefer-ts-exts bin/cdk.dev.ts\" --profile cyberk --outputs-file ./cdk-dev-outputs.json",
-    "deploy:dev:quick": "cd ../nest && pnpm build && cd ../cdk && yarn deploy:dev:local"
+    "cdk:bootstrap:dev": "cdk bootstrap --app \"npx ts-node --prefer-ts-exts bin/cdk.dev.ts\" --profile apollo-cli",
+    "deploy:cicd_dev": "ENV=dev cdk deploy --app \"npx ts-node --prefer-ts-exts bin/cdk.dev.ts\" --outputs-file ./cdk-output/cdk-dev-outputs.json",
+    "deploy:cicd_prd": "ENV=dev cdk deploy --app \"npx ts-node --prefer-ts-exts bin/cdk.prd.ts\" --outputs-file ./cdk-output/cdk-prd-outputs.json",
+    "deploy:local": "ENV=dev cdk deploy --app \"npx ts-node --prefer-ts-exts bin/cdk.dev.ts\" --profile apollo-cli --outputs-file ./cdk-output/cdk-dev-outputs.json",
+    "deploy:quick": "cd ../nest && pnpm build && cd ../cdk && pnpm deploy:local",
+    "cdk:synth:dev": "cdk synth --no-staging --app \"npx ts-node --prefer-ts-exts bin/cdk.dev.ts\" --profile apollo-cli > ./cdk-templates/template_dev.yaml",
+    "cdk:synth:prd": "cdk synth --no-staging --app \"npx ts-node --prefer-ts-exts bin/cdk.prd.ts\" --profile apollo-cli > ./cdk-templates/template_prd.yaml"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

@@ -9,14 +9,11 @@ new CdkStack(
   'be-boilerplate-dev',
   {
     env: 'dev',
-    STORAGE_BUCKET: 'be-boilerplate-dev-storage',
-    name: 'be-boilerplate',
+    name: 'nexus-boilerplate',
     ORIGINS: ['http://localhost:3000'],
+    SECRET_ARN: process.env.SECRET_ARN!,
   },
   {
-    env: {
-      account: '182399686191',
-      region: 'ap-southeast-1',
-    },
+    env: { account: '390844773626', region: 'ap-southeast-2' },
   },
 )

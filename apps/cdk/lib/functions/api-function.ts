@@ -18,9 +18,9 @@ export class ApiFunction extends BaseFunction {
       timeout: Duration.seconds(30),
       memorySize: 512,
       layers: [scope.layer],
-      initialPolicy: [scope.storage.s3Policy],
       environment: {
         ...scope.commonEnvs,
+        ...scope.db.dbEnvs,
       },
     })
   }
