@@ -84,6 +84,7 @@ export class StudentController {
   @ApiOkResponse({ type: StudentEntity })
   @HttpCode(HttpStatus.OK)
   async findOne(@Param('id') id: string) {
+    console.log('id', id)
     return this._studentService.findOne(id)
   }
 
@@ -94,7 +95,7 @@ export class StudentController {
   @ApiCreatedResponse({ type: StudentEntity })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body(ValidationPipe) createStudentDto: CreateStudentDto, @CurUser() user: UserEntity) {
-    // Pass the current user's ID as userId for the student
+    console.log('createStudentDto', createStudentDto)
     return this._studentService.create(createStudentDto, user.id)
   }
 

@@ -7,6 +7,8 @@ import { CreateStudentDto } from './dtos/create-student.dto'
 import { UpdateStudentDto } from './dtos/update-student.dto'
 import { GetStudentsDto } from './dtos/get-students.dto'
 import { GetStudentListResDto } from './dtos/get-student-list-res.dto'
+import { Role } from '@prisma/client'
+import { Hash } from '@app/helper'
 
 @Injectable()
 export class StudentService {
@@ -92,18 +94,45 @@ export class StudentService {
         throw new BadRequestException('Student ID or email already exists')
       }
 
-      const student = await this._prisma.student.create({
-        data: {
-          ...createStudentDto,
-          dob: new Date(createStudentDto.dob),
-          userId,
-        },
+      // Check if username already exists
+      const existingUser = await this._prisma.user.findUnique({
+        where: { username: createStudentDto.username },
       })
 
-      return th.toInstanceSafe(StudentEntity, student)
+      if (existingUser) {
+        throw new BadRequestException('Username already exists')
+      }
+
+      // Create user and student in a transaction
+      const result = await this._prisma.$transaction(async (prisma) => {
+        // Create user first
+        const user = await prisma.user.create({
+          data: {
+            username: createStudentDto.username,
+            password: Hash.make(createStudentDto.password),
+            role: Role.STUDENT,
+          },
+        })
+
+        // Destructure to remove username and password from student data
+        const { username, password, ...studentData } = createStudentDto
+
+        // Create student linked to the user
+        const student = await prisma.student.create({
+          data: {
+            ...studentData,
+            dob: new Date(createStudentDto.dob),
+            userId: user.id,
+          },
+        })
+
+        return { user, student }
+      })
+
+      return th.toInstanceSafe(StudentEntity, result.student)
     } catch (error) {
       if (ph.isMutationUniqueError(error, {})) {
-        throw new BadRequestException('Student ID or email already exists')
+        throw new BadRequestException('Student ID, email, or username already exists')
       }
       throw error
     }
