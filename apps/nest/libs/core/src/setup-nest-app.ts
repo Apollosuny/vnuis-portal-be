@@ -60,6 +60,9 @@ export async function bootstrapServerless(modular, routePrefix = ''): Promise<Ha
   setupNestApp(app)
   globalPrefix = routePrefix
   app.setGlobalPrefix(globalPrefix)
+  app.enableCors({
+    origin: ['http://localhost:3000', 'https://virtuuni-nexus.netlify.app'],
+  })
   setupSwaggerUI(app)
   await app.init()
 
