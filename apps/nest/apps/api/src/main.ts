@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core'
 import { ApiModule } from './api.module'
-import { bootstrapServerless, setupNestApp, setupSwaggerUI } from '@app/core/setup-nest-app'
+import { bootstrapServerless, getCorsConfig, setupNestApp, setupSwaggerUI } from '@app/core/setup-nest-app'
 import { Handler } from 'express'
 import type { Context } from 'aws-lambda'
 import { promiseHelper } from '@app/helper/promise.helper'
@@ -9,12 +9,9 @@ const localDev = process.env.LOCAL_DEV === 'true'
 
 if (localDev) {
   async function bootstrap() {
-    const app = await NestFactory.create(ApiModule)
+    const app = await NestFactory.create(ApiModule, { cors: getCorsConfig() })
     await setupNestApp(app)
     app.setGlobalPrefix('api')
-    app.enableCors({
-      origin: '*',
-    })
     setupSwaggerUI(app)
     await app.listen(process.env.port ?? 4000)
     console.log(`Server is running at http://localhost:${process.env.port ?? 4000}/docs`)

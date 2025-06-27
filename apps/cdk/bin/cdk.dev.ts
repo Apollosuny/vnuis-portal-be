@@ -10,7 +10,7 @@ new CdkStack(
   {
     env: 'dev',
     name: 'nexus-boilerplate',
-    ORIGINS: ['http://localhost:3000'],
+    ORIGINS: ['http://localhost:3000', 'https://virtuuni-nexus.netlify.app'],
     SECRET_ARN: process.env.SECRET_ARN!,
   },
   {

@@ -24,10 +24,24 @@ export class Apigateway extends BaseInfa {
       name: apiName,
       protocolType: 'HTTP',
       corsConfiguration: {
-        allowHeaders: ['Content-Type', 'X-Amz-Date', 'authorization', 'accept', 'referer', 'user-agent'],
+        allowHeaders: [
+          'Content-Type',
+          'X-Amz-Date',
+          'X-Requested-With',
+          'X-Request-Timestamp',
+          'authorization',
+          'accept',
+          'referer',
+          'user-agent',
+          'origin',
+          'access-control-request-method',
+          'access-control-request-headers',
+        ],
         maxAge: 60 * 60, // 1h
         allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         allowOrigins: config.ORIGINS,
+        allowCredentials: true,
+        exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
       },
     })
 
@@ -68,7 +82,18 @@ export class Apigateway extends BaseInfa {
         authorizationType: 'NONE',
         target: `integrations/${apiIntegration.ref}`,
       })
+
+      // Add OPTIONS route for CORS preflight
+      const optionsRoute = new CfnRoute(this, `${_function.functionId}-options-route`, {
+        apiId: this.api!.ref,
+        routeKey: `OPTIONS /${route}/{proxy+}`,
+        operationName: `${route}-options`,
+        authorizationType: 'NONE',
+        target: `integrations/${apiIntegration.ref}`,
+      })
+
       this.apiDeployment.node.addDependency(apiRoute)
+      this.apiDeployment.node.addDependency(optionsRoute)
     }
     this.functions.push(_function)
     return this

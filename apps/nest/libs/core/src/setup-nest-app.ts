@@ -27,6 +27,30 @@ export async function setupNestApp(app: INestApplication) {
   app.enableShutdownHooks()
 }
 
+export function getCorsConfig() {
+  const allowedOrigins = ['http://localhost:3000', 'https://virtuuni-nexus.netlify.app']
+
+  return {
+    origin: allowedOrigins,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'X-Amz-Date',
+      'X-Requested-With',
+      'X-Request-Timestamp',
+      'authorization',
+      'accept',
+      'referer',
+      'user-agent',
+      'origin',
+      'access-control-request-method',
+      'access-control-request-headers',
+    ],
+    exposedHeaders: ['Content-Length', 'X-Kuma-Revision'],
+  }
+}
+
 let app: INestApplication
 let globalPrefix = ''
 export async function setupSwaggerUI(app: INestApplication, options?: { route?: string; metadata?: any }) {
@@ -52,17 +76,15 @@ export async function bootstrapServerless(modular, routePrefix = ''): Promise<Ha
     logger: [
       'error',
       'warn',
-      'debug',
+      // 'debug',
       // 'verbose'
     ],
-    cors: true,
+    cors: getCorsConfig(),
   })
   setupNestApp(app)
   globalPrefix = routePrefix
   app.setGlobalPrefix(globalPrefix)
-  app.enableCors({
-    origin: ['http://localhost:3000', 'https://virtuuni-nexus.netlify.app'],
-  })
+
   setupSwaggerUI(app)
   await app.init()
 
