@@ -528,13 +528,19 @@ async function main() {
 
     const requireApproval = Math.random() > 0.3 // 70% chance form requires approval
 
-    // Define question type that includes options for select type
+    // Define question type that includes answers for select type
+    type FormQuestionAnswer = {
+      id: number
+      type: string
+      content: string
+    }
+
     type FormQuestion = {
       id: number
       title: string
       type: string
       required: boolean
-      options?: string[]
+      answers?: FormQuestionAnswer[]
     }
 
     // Create a form data with questions array instead of JSON Schema
@@ -586,14 +592,22 @@ async function main() {
           id: 7,
           title: 'Transcript Type',
           type: 'select',
-          options: ['Official Transcript', 'Unofficial Transcript', 'Grade Report'],
+          answers: [
+            { id: 1, type: 'option', content: 'Official Transcript' },
+            { id: 2, type: 'option', content: 'Unofficial Transcript' },
+            { id: 3, type: 'option', content: 'Grade Report' },
+          ],
           required: true,
         },
         {
           id: 8,
           title: 'Delivery Method',
           type: 'select',
-          options: ['Email', 'Mail', 'Pick-up in person'],
+          answers: [
+            { id: 1, type: 'option', content: 'Email' },
+            { id: 2, type: 'option', content: 'Mail' },
+            { id: 3, type: 'option', content: 'Pick-up in person' },
+          ],
           required: true,
         },
       )
@@ -603,7 +617,12 @@ async function main() {
           id: 7,
           title: 'Scholarship Type',
           type: 'select',
-          options: ['Academic Merit', 'Financial Need', 'Athletic Achievement', 'Community Service'],
+          answers: [
+            { id: 1, type: 'option', content: 'Academic Merit' },
+            { id: 2, type: 'option', content: 'Financial Need' },
+            { id: 3, type: 'option', content: 'Athletic Achievement' },
+            { id: 4, type: 'option', content: 'Community Service' },
+          ],
           required: true,
         },
         {
@@ -616,7 +635,12 @@ async function main() {
           id: 9,
           title: 'Annual Family Income',
           type: 'select',
-          options: ['Under $30,000', '$30,000 - $60,000', '$60,000 - $100,000', 'Over $100,000'],
+          answers: [
+            { id: 1, type: 'option', content: 'Under $30,000' },
+            { id: 2, type: 'option', content: '$30,000 - $60,000' },
+            { id: 3, type: 'option', content: '$60,000 - $100,000' },
+            { id: 4, type: 'option', content: 'Over $100,000' },
+          ],
           required: false,
         },
       )
@@ -626,7 +650,12 @@ async function main() {
           id: 7,
           title: 'Leave Type',
           type: 'select',
-          options: ['Medical Leave', 'Personal Leave', 'Academic Leave', 'Emergency Leave'],
+          answers: [
+            { id: 1, type: 'option', content: 'Medical Leave' },
+            { id: 2, type: 'option', content: 'Personal Leave' },
+            { id: 3, type: 'option', content: 'Academic Leave' },
+            { id: 4, type: 'option', content: 'Emergency Leave' },
+          ],
           required: true,
         },
         {
@@ -639,6 +668,340 @@ async function main() {
           id: 9,
           title: 'Expected Return Date',
           type: 'date',
+          required: true,
+        },
+      )
+    } else if (formType.includes('Student ID Card')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Card Type',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'New Student ID' },
+            { id: 2, type: 'option', content: 'Replacement Card' },
+            { id: 3, type: 'option', content: 'Card Update' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Reason for Request',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Lost Card' },
+            { id: 2, type: 'option', content: 'Damaged Card' },
+            { id: 3, type: 'option', content: 'Information Change' },
+            { id: 4, type: 'option', content: 'First Time Request' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Exchange Program')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Preferred Country',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'United States' },
+            { id: 2, type: 'option', content: 'United Kingdom' },
+            { id: 3, type: 'option', content: 'Australia' },
+            { id: 4, type: 'option', content: 'Canada' },
+            { id: 5, type: 'option', content: 'Germany' },
+            { id: 6, type: 'option', content: 'France' },
+            { id: 7, type: 'option', content: 'Japan' },
+            { id: 8, type: 'option', content: 'South Korea' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Program Duration',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: '1 Semester' },
+            { id: 2, type: 'option', content: '2 Semesters' },
+            { id: 3, type: 'option', content: '1 Academic Year' },
+            { id: 4, type: 'option', content: 'Summer Program' },
+          ],
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Academic Level',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Undergraduate' },
+            { id: 2, type: 'option', content: 'Graduate' },
+            { id: 3, type: 'option', content: 'PhD' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Housing')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Room Type Preference',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Single Room' },
+            { id: 2, type: 'option', content: 'Double Room' },
+            { id: 3, type: 'option', content: 'Triple Room' },
+            { id: 4, type: 'option', content: 'Shared Apartment' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Building Preference',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Building A' },
+            { id: 2, type: 'option', content: 'Building B' },
+            { id: 3, type: 'option', content: 'Building C' },
+            { id: 4, type: 'option', content: 'No Preference' },
+          ],
+          required: false,
+        },
+        {
+          id: 9,
+          title: 'Special Requirements',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Wheelchair Accessible' },
+            { id: 2, type: 'option', content: 'Air Conditioning' },
+            { id: 3, type: 'option', content: 'Ground Floor' },
+            { id: 4, type: 'option', content: 'Quiet Zone' },
+            { id: 5, type: 'option', content: 'None' },
+          ],
+          required: false,
+        },
+      )
+    } else if (formType.includes('Major Change')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Current Major',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Computer Science' },
+            { id: 2, type: 'option', content: 'Business Administration' },
+            { id: 3, type: 'option', content: 'Engineering' },
+            { id: 4, type: 'option', content: 'Medicine' },
+            { id: 5, type: 'option', content: 'Law' },
+            { id: 6, type: 'option', content: 'Arts' },
+            { id: 7, type: 'option', content: 'Mathematics' },
+            { id: 8, type: 'option', content: 'Physics' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Desired Major',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Computer Science' },
+            { id: 2, type: 'option', content: 'Business Administration' },
+            { id: 3, type: 'option', content: 'Engineering' },
+            { id: 4, type: 'option', content: 'Medicine' },
+            { id: 5, type: 'option', content: 'Law' },
+            { id: 6, type: 'option', content: 'Arts' },
+            { id: 7, type: 'option', content: 'Mathematics' },
+            { id: 8, type: 'option', content: 'Physics' },
+          ],
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Academic Year',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: '1st Year' },
+            { id: 2, type: 'option', content: '2nd Year' },
+            { id: 3, type: 'option', content: '3rd Year' },
+            { id: 4, type: 'option', content: '4th Year' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Course Registration')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Semester',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Fall 2025' },
+            { id: 2, type: 'option', content: 'Spring 2026' },
+            { id: 3, type: 'option', content: 'Summer 2026' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Registration Type',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Regular Registration' },
+            { id: 2, type: 'option', content: 'Add/Drop' },
+            { id: 3, type: 'option', content: 'Late Registration' },
+            { id: 4, type: 'option', content: 'Audit Course' },
+          ],
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Course Load',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Full-time (12+ credits)' },
+            { id: 2, type: 'option', content: 'Part-time (6-11 credits)' },
+            { id: 3, type: 'option', content: 'Light Load (1-5 credits)' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Exam Reschedule')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Exam Type',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Midterm Exam' },
+            { id: 2, type: 'option', content: 'Final Exam' },
+            { id: 3, type: 'option', content: 'Quiz' },
+            { id: 4, type: 'option', content: 'Practical Exam' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Reason for Reschedule',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Medical Emergency' },
+            { id: 2, type: 'option', content: 'Family Emergency' },
+            { id: 3, type: 'option', content: 'Conflicting Schedule' },
+            { id: 4, type: 'option', content: 'Religious Observance' },
+            { id: 5, type: 'option', content: 'Other' },
+          ],
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Preferred Time Slot',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Morning (8AM-12PM)' },
+            { id: 2, type: 'option', content: 'Afternoon (1PM-5PM)' },
+            { id: 3, type: 'option', content: 'Evening (6PM-8PM)' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Graduation')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Degree Level',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: "Bachelor's Degree" },
+            { id: 2, type: 'option', content: "Master's Degree" },
+            { id: 3, type: 'option', content: 'Doctoral Degree' },
+            { id: 4, type: 'option', content: 'Certificate' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Graduation Ceremony Attendance',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Will Attend' },
+            { id: 2, type: 'option', content: 'Will Not Attend' },
+            { id: 3, type: 'option', content: 'Undecided' },
+          ],
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Diploma Delivery Method',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Pick up in person' },
+            { id: 2, type: 'option', content: 'Mail to address' },
+            { id: 3, type: 'option', content: 'Hold for later pickup' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Library Card')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Card Status',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'New Card' },
+            { id: 2, type: 'option', content: 'Renewal' },
+            { id: 3, type: 'option', content: 'Replacement' },
+            { id: 4, type: 'option', content: 'Update Information' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Library Access Level',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Basic Access' },
+            { id: 2, type: 'option', content: 'Extended Hours' },
+            { id: 3, type: 'option', content: 'Special Collections' },
+            { id: 4, type: 'option', content: 'Inter-library Loan' },
+          ],
+          required: true,
+        },
+      )
+    } else if (formType.includes('Parking Permit')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Permit Type',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Student Parking' },
+            { id: 2, type: 'option', content: 'Faculty Parking' },
+            { id: 3, type: 'option', content: 'Visitor Parking' },
+            { id: 4, type: 'option', content: 'Motorcycle Parking' },
+          ],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Parking Zone Preference',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Zone A (Academic Buildings)' },
+            { id: 2, type: 'option', content: 'Zone B (Dormitories)' },
+            { id: 3, type: 'option', content: 'Zone C (Sports Complex)' },
+            { id: 4, type: 'option', content: 'Zone D (Administration)' },
+          ],
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Vehicle Type',
+          type: 'select',
+          answers: [
+            { id: 1, type: 'option', content: 'Car' },
+            { id: 2, type: 'option', content: 'Motorcycle' },
+            { id: 3, type: 'option', content: 'Bicycle' },
+            { id: 4, type: 'option', content: 'Electric Vehicle' },
+          ],
           required: true,
         },
       )
@@ -789,8 +1152,9 @@ async function main() {
             }
             break
           case 'select':
-            if (question.options && question.options.length > 0) {
-              answer = question.options[Math.floor(Math.random() * question.options.length)]
+            if (question.answers && question.answers.length > 0) {
+              const randomAnswer = question.answers[Math.floor(Math.random() * question.answers.length)]
+              answer = randomAnswer.content
             }
             break
           case 'number':
