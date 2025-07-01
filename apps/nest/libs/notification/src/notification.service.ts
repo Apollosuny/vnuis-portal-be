@@ -5,6 +5,7 @@ import { CreateNotificationDto, QueryNotificationDto, UpdateNotificationDto } fr
 import { th } from '@app/helper/transform.helper'
 import { NotificationEntity } from './entities/notification.entity'
 import { UserEntity } from '@app/user/entities/user.entity'
+import { MyNotificationResDto } from './dtos/my-notification-res.dto'
 
 @Injectable()
 export class NotificationService {
@@ -13,7 +14,7 @@ export class NotificationService {
   async getNotifications(queryNotificationDto: QueryNotificationDto) {
     const { select, include } = queryNotificationDto
 
-    let queryOptions: any = {
+    const queryOptions: any = {
       where: queryNotificationDto.where,
       orderBy: queryNotificationDto.sort,
       take: queryNotificationDto.take,
@@ -35,14 +36,7 @@ export class NotificationService {
   async getNotificationsByUser(user: UserEntity, queryDto: QueryNotificationDto) {
     const { select, include } = queryDto
 
-    // Check if the user is a student
-    if (user.role !== 'STUDENT' || !user.student) {
-      return [] // Return empty array if not a student
-    }
-
-    console.log('query', queryDto)
-
-    let queryOptions: any = {
+    const queryOptions: any = {
       where: {
         ...queryDto.where,
         OR: [
@@ -69,8 +63,33 @@ export class NotificationService {
     }
 
     const notifications = await this.prisma.notification.findMany(queryOptions)
-    console.log('notification ', notifications.length)
-    return th.toInstancesSafe(NotificationEntity, notifications)
+
+    const total = await this.prisma.notification.count({
+      where: {
+        ...queryDto.where,
+        OR: [
+          { targetType: NotificationTargetType.ALL_STUDENTS },
+          { targetType: NotificationTargetType.SPECIFIC_STUDENTS, targetIds: { has: user.id } },
+          {
+            targetType: NotificationTargetType.BY_MAJOR,
+            targetIds: { has: user.student.major },
+          },
+        ],
+        status: NotificationStatus.SENT,
+      },
+    })
+
+    const totalPages = Math.ceil(total / queryDto.take)
+    const currentPage = Math.floor((queryDto.skip || 0) / (queryDto.take || 1)) + 1
+    const pageSize = queryDto.take || 10
+
+    return th.toInstanceSafe(MyNotificationResDto, {
+      data: notifications,
+      total,
+      totalPages,
+      currentPage,
+      pageSize,
+    })
   }
 
   async getNotification(id: string) {

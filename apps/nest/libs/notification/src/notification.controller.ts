@@ -18,6 +18,7 @@ import {
 } from './dtos'
 import { ExposeAll } from '@app/core/decorators/expose-all.decorator'
 import { UserEntity } from '@app/user/entities/user.entity'
+import { MyNotificationResDto } from './dtos/my-notification-res.dto'
 
 @ApiTags('notifications')
 @Controller('notifications')
@@ -36,7 +37,7 @@ export class NotificationController {
 
   @Get('me')
   @ApiBearerAuth()
-  @ApiOkResponse({ type: () => NotificationEntity, isArray: true })
+  @ApiOkResponse({ type: () => MyNotificationResDto })
   @UseGuards(JwtGuard)
   @CacheTTL(2000)
   getMyNotifications(@CurUser() user: UserEntity, @RawQuery() queryNotificationDto: QueryNotificationDto) {
