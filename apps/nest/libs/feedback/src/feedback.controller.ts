@@ -39,6 +39,16 @@ import { RawQuery } from '@app/core/decorators/query.decorator'
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
+  @Get('me')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: () => FeedbackEntity, isArray: true })
+  @UseInterceptors(AppCacheInterceptor)
+  @ExposeAll()
+  async getMyFeedbacks(@CurUser() user: UserEntity, @RawQuery() queryFeedbackDto: QueryFeedbackDto) {
+    return await this.feedbackService.getMyFeedbacks(user, queryFeedbackDto)
+  }
+
   @Get()
   @ApiBearerAuth()
   @ApiOkResponse({ type: () => FeedbackEntity, isArray: true })

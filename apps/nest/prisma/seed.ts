@@ -18,7 +18,7 @@ import {
   SentimentType,
   FeedbackStatus,
 } from '@prisma/client'
-import { faker } from '@faker-js/faker/locale/vi'
+import { faker } from '@faker-js/faker'
 import { DateTime } from 'luxon'
 
 const prisma = new PrismaClient()
@@ -117,9 +117,116 @@ async function main() {
   const adminCount = 5
   const admins = []
 
+  // Common names for mockdata
+  const firstNames = [
+    'John',
+    'Jane',
+    'Michael',
+    'Sarah',
+    'David',
+    'Emily',
+    'James',
+    'Ashley',
+    'Robert',
+    'Jessica',
+    'William',
+    'Amanda',
+    'Christopher',
+    'Jennifer',
+    'Daniel',
+    'Lisa',
+    'Matthew',
+    'Michelle',
+    'Anthony',
+    'Kimberly',
+    'Mark',
+    'Donna',
+    'Donald',
+    'Carol',
+    'Steven',
+    'Sandra',
+    'Paul',
+    'Ruth',
+    'Andrew',
+    'Sharon',
+    'Joshua',
+    'Nancy',
+    'Kenneth',
+    'Laura',
+    'Kevin',
+    'Cynthia',
+    'Brian',
+    'Kathleen',
+    'George',
+    'Helen',
+    'Timothy',
+    'Amy',
+    'Ronald',
+    'Shirley',
+    'Jason',
+    'Angela',
+    'Edward',
+    'Brenda',
+    'Jeffrey',
+    'Emma',
+  ]
+
+  const lastNames = [
+    'Smith',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
+    'Hernandez',
+    'Lopez',
+    'Gonzalez',
+    'Wilson',
+    'Anderson',
+    'Thomas',
+    'Taylor',
+    'Moore',
+    'Jackson',
+    'Martin',
+    'Lee',
+    'Perez',
+    'Thompson',
+    'White',
+    'Harris',
+    'Sanchez',
+    'Clark',
+    'Ramirez',
+    'Lewis',
+    'Robinson',
+    'Walker',
+    'Young',
+    'Allen',
+    'King',
+    'Wright',
+    'Scott',
+    'Torres',
+    'Nguyen',
+    'Hill',
+    'Flores',
+    'Green',
+    'Adams',
+    'Nelson',
+    'Baker',
+    'Hall',
+    'Rivera',
+    'Campbell',
+    'Mitchell',
+    'Carter',
+    'Roberts',
+  ]
+
   for (let i = 0; i < adminCount; i++) {
-    const firstName = faker.person.firstName()
-    const lastName = faker.person.lastName()
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
     const username = `admin${i + 1}@virtuuni.edu.vn`.toLowerCase()
     const password = 'admin123'
 
@@ -138,7 +245,7 @@ async function main() {
               firstName,
               lastName,
               email: username,
-              phone: `09${faker.string.numeric(8)}`,
+              phone: faker.phone.number(),
               avatarUrl: faker.image.avatar(),
             },
           },
@@ -149,6 +256,16 @@ async function main() {
       })
       admins.push(admin)
       console.log(`Admin ${username} created with ID: ${admin.id}`)
+    } else {
+      console.log(`Admin ${username} already exists, skipping creation`)
+      // Still add to admins array if it exists
+      const existingAdminWithOperator = await prisma.user.findUnique({
+        where: { username },
+        include: { operator: true },
+      })
+      if (existingAdminWithOperator) {
+        admins.push(existingAdminWithOperator)
+      }
     }
   }
 
@@ -164,12 +281,19 @@ async function main() {
     'Civil Engineering',
     'Electrical Engineering',
     'Biotechnology',
+    'Medicine',
+    'Law',
+    'Architecture',
+    'Psychology',
+    'Mathematics',
+    'Physics',
+    'Chemistry',
   ]
 
   for (let i = 0; i < studentCount; i++) {
-    const firstName = faker.person.firstName()
-    const lastName = faker.person.lastName()
-    const studentId = `ST${String(2000 + i).padStart(5, '0')}`
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
+    const studentId = `ST${String(2024001 + i).padStart(7, '0')}`
     const username = `${studentId.toLowerCase()}@student.virtuuni.edu.vn`.toLowerCase()
     const password = 'student123'
     const enrollYear = 2020 + Math.floor(Math.random() * 5)
@@ -194,8 +318,8 @@ async function main() {
               dob: faker.date.birthdate({ min: 18, max: 30, mode: 'age' }),
               enrollYear,
               major,
-              phone: `09${faker.string.numeric(8)}`,
-              address: faker.location.streetAddress(true),
+              phone: faker.phone.number(),
+              address: faker.location.streetAddress() + ', ' + faker.location.city() + ', ' + faker.location.state(),
               avatarUrl: faker.image.avatar(),
             },
           },
@@ -299,13 +423,15 @@ async function main() {
     const room = rooms[Math.floor(Math.random() * rooms.length)]
 
     // Get a valid student from the students array
-    let studentIndex = Math.floor(Math.random() * students.length)
-    let studentObj = students[studentIndex]
-    // Make sure studentObj exists and has a student property
-    while (!studentObj || !studentObj.student) {
-      if (students.length === 0) break
-      studentIndex = Math.floor(Math.random() * students.length)
-      studentObj = students[studentIndex]
+    let studentObj = null
+    // Try to find a valid student
+    for (let attempt = 0; attempt < students.length; attempt++) {
+      const studentIndex = Math.floor(Math.random() * students.length)
+      const candidateStudent = students[studentIndex]
+      if (candidateStudent && candidateStudent.student) {
+        studentObj = candidateStudent
+        break
+      }
     }
 
     if (!studentObj || !studentObj.student) {
@@ -318,16 +444,14 @@ async function main() {
     // Get a valid operator from the admins array
     let operator = null
     if (Math.random() > 0.3 && admins.length > 0) {
-      let adminIndex = Math.floor(Math.random() * admins.length)
-      let adminObj = admins[adminIndex]
-      // Make sure adminObj exists and has an operator property
-      while (!adminObj || !adminObj.operator) {
-        if (admins.length === 0) break
-        adminIndex = Math.floor(Math.random() * admins.length)
-        adminObj = admins[adminIndex]
-      }
-      if (adminObj && adminObj.operator) {
-        operator = adminObj.operator
+      // Try to find a valid admin with operator
+      for (let attempt = 0; attempt < admins.length; attempt++) {
+        const adminIndex = Math.floor(Math.random() * admins.length)
+        const adminObj = admins[adminIndex]
+        if (adminObj && adminObj.operator) {
+          operator = adminObj.operator
+          break
+        }
       }
     }
 
@@ -349,10 +473,15 @@ async function main() {
         startTime,
         endTime,
         duration,
-        purpose: faker.lorem.sentence(),
+        purpose: `Meeting for ${majors[Math.floor(Math.random() * majors.length)]} students - ${['Study Group', 'Project Discussion', 'Lab Session', 'Workshop', 'Presentation Practice', 'Team Meeting'][Math.floor(Math.random() * 6)]}`,
         handleByOperatorId: operator?.id,
         handleAt: status !== RoomBookingStatus.PENDING ? randomDate(addDays(today, -10), today) : null,
-        remarks: Math.random() > 0.7 ? faker.lorem.sentence() : null,
+        remarks:
+          Math.random() > 0.7
+            ? ['Approved for academic use', 'Equipment needed', 'Additional setup required', 'Standard booking'][
+                Math.floor(Math.random() * 4)
+              ]
+            : null,
         attendees: 5 + Math.floor(Math.random() * 20),
         isRecurring,
         status,
@@ -376,23 +505,25 @@ async function main() {
 
   // Create Administrative Forms (10 different forms)
   const formTypes = [
-    'Attendance Certificate',
-    'Transcript Request',
-    'Scholarship Application',
-    'Leave Request',
-    'Exchange Program',
-    'Dormitory Application',
-    'Major Change',
-    'Course Add/Drop',
-    'Exam Reschedule',
-    'Graduation Request',
+    'Student ID Card Request',
+    'Official Transcript Request',
+    'Merit Scholarship Application',
+    'Medical Leave Request',
+    'Student Exchange Program Application',
+    'Campus Housing Application',
+    'Major Change Request',
+    'Course Registration Form',
+    'Exam Reschedule Request',
+    'Graduation Application',
+    'Library Card Renewal',
+    'Parking Permit Application',
   ]
 
   const forms = []
 
   for (let i = 0; i < formTypes.length; i++) {
     const formType = formTypes[i]
-    const formName = `${formType} Form`
+    const formName = formType
     const slug = formName.toLowerCase().replace(/\s+/g, '-')
 
     const requireApproval = Math.random() > 0.3 // 70% chance form requires approval
@@ -423,13 +554,25 @@ async function main() {
         },
         {
           id: 3,
-          title: 'Reason',
-          type: 'textarea',
+          title: 'Contact Email',
+          type: 'email',
           required: true,
         },
         {
           id: 4,
-          title: 'Additional Information',
+          title: 'Phone Number',
+          type: 'text',
+          required: true,
+        },
+        {
+          id: 5,
+          title: 'Reason for Request',
+          type: 'textarea',
+          required: true,
+        },
+        {
+          id: 6,
+          title: 'Additional Comments',
           type: 'textarea',
           required: false,
         },
@@ -437,36 +580,65 @@ async function main() {
     }
 
     // Add form-specific fields
-    if (formType === 'Transcript Request') {
+    if (formType.includes('Transcript')) {
       formData.questions.push(
         {
-          id: 5,
+          id: 7,
           title: 'Transcript Type',
           type: 'select',
-          options: ['Official Transcript', 'Unofficial Transcript'],
+          options: ['Official Transcript', 'Unofficial Transcript', 'Grade Report'],
           required: true,
         },
         {
-          id: 6,
+          id: 8,
           title: 'Delivery Method',
           type: 'select',
           options: ['Email', 'Mail', 'Pick-up in person'],
           required: true,
         },
       )
-    } else if (formType === 'Scholarship Application') {
+    } else if (formType.includes('Scholarship')) {
       formData.questions.push(
         {
-          id: 5,
+          id: 7,
           title: 'Scholarship Type',
           type: 'select',
-          options: ['Academic Merit', 'Financial Need', 'Athletic Achievement'],
+          options: ['Academic Merit', 'Financial Need', 'Athletic Achievement', 'Community Service'],
           required: true,
         },
         {
-          id: 6,
+          id: 8,
           title: 'Current GPA',
           type: 'number',
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Annual Family Income',
+          type: 'select',
+          options: ['Under $30,000', '$30,000 - $60,000', '$60,000 - $100,000', 'Over $100,000'],
+          required: false,
+        },
+      )
+    } else if (formType.includes('Leave')) {
+      formData.questions.push(
+        {
+          id: 7,
+          title: 'Leave Type',
+          type: 'select',
+          options: ['Medical Leave', 'Personal Leave', 'Academic Leave', 'Emergency Leave'],
+          required: true,
+        },
+        {
+          id: 8,
+          title: 'Start Date',
+          type: 'date',
+          required: true,
+        },
+        {
+          id: 9,
+          title: 'Expected Return Date',
+          type: 'date',
           required: true,
         },
       )
@@ -475,16 +647,14 @@ async function main() {
     // Get a valid operator from the admins array
     let operator = null
     if (admins.length > 0) {
-      let adminIndex = Math.floor(Math.random() * admins.length)
-      let adminObj = admins[adminIndex]
-      // Make sure adminObj exists and has an operator property
-      while (!adminObj || !adminObj.operator) {
-        if (admins.length === 0) break
-        adminIndex = Math.floor(Math.random() * admins.length)
-        adminObj = admins[adminIndex]
-      }
-      if (adminObj && adminObj.operator) {
-        operator = adminObj.operator
+      // Try to find a valid admin with operator
+      for (let attempt = 0; attempt < admins.length; attempt++) {
+        const adminIndex = Math.floor(Math.random() * admins.length)
+        const adminObj = admins[adminIndex]
+        if (adminObj && adminObj.operator) {
+          operator = adminObj.operator
+          break
+        }
       }
     }
 
@@ -508,7 +678,7 @@ async function main() {
       data: {
         name: formName,
         slug,
-        description: `Form for ${formType}`,
+        description: `Official university form for ${formType.toLowerCase()}. Please fill out all required fields and submit for processing.`,
         type: 'PROCEDURES', // Changed to match test enum value
         data: formData,
         isActive: Math.random() > 0.1, // 90% chance form is active
@@ -517,8 +687,11 @@ async function main() {
         createdByOperatorId: operator.id,
         fileUrl: Math.random() > 0.5 ? `https://virtuuni.edu.vn/forms/${slug}.pdf` : null,
         metadata: {
-          department: faker.commerce.department(),
+          department: ['Academic Affairs', 'Student Services', 'Registrar Office', 'Financial Aid', 'Administration'][
+            Math.floor(Math.random() * 5)
+          ],
           processingTime: `${1 + Math.floor(Math.random() * 5)} business days`,
+          contactEmail: `${slug}@virtuuni.edu.vn`,
         },
       },
     })
@@ -540,13 +713,15 @@ async function main() {
     const form = forms[Math.floor(Math.random() * forms.length)]
 
     // Get a valid student from the students array
-    let studentIndex = Math.floor(Math.random() * students.length)
-    let studentObj = students[studentIndex]
-    // Make sure studentObj exists and has a student property
-    while (!studentObj || !studentObj.student) {
-      if (students.length === 0) break
-      studentIndex = Math.floor(Math.random() * students.length)
-      studentObj = students[studentIndex]
+    let studentObj = null
+    // Try to find a valid student
+    for (let attempt = 0; attempt < students.length; attempt++) {
+      const studentIndex = Math.floor(Math.random() * students.length)
+      const candidateStudent = students[studentIndex]
+      if (candidateStudent && candidateStudent.student) {
+        studentObj = candidateStudent
+        break
+      }
     }
 
     if (!studentObj || !studentObj.student) {
@@ -559,16 +734,14 @@ async function main() {
     // Get a valid operator from the admins array if needed
     let operator = null
     if (Math.random() > 0.3 && admins.length > 0) {
-      let adminIndex = Math.floor(Math.random() * admins.length)
-      let adminObj = admins[adminIndex]
-      // Make sure adminObj exists and has an operator property
-      while (!adminObj || !adminObj.operator) {
-        if (admins.length === 0) break
-        adminIndex = Math.floor(Math.random() * admins.length)
-        adminObj = admins[adminIndex]
-      }
-      if (adminObj && adminObj.operator) {
-        operator = adminObj.operator
+      // Try to find a valid admin with operator
+      for (let attempt = 0; attempt < admins.length; attempt++) {
+        const adminIndex = Math.floor(Math.random() * admins.length)
+        const adminObj = admins[adminIndex]
+        if (adminObj && adminObj.operator) {
+          operator = adminObj.operator
+          break
+        }
       }
     }
 
@@ -587,12 +760,33 @@ async function main() {
               answer = `${student.firstName} ${student.lastName}`
             } else if (question.title === 'Student ID') {
               answer = student.studentId
+            } else if (question.title === 'Phone Number') {
+              answer = student.phone
             } else {
-              answer = faker.lorem.words(3)
+              answer = ['Academic research', 'Graduate school application', 'Job application', 'Personal records'][
+                Math.floor(Math.random() * 4)
+              ]
+            }
+            break
+          case 'email':
+            if (question.title === 'Contact Email') {
+              answer = student.email
+            } else {
+              answer = student.email
             }
             break
           case 'textarea':
-            answer = faker.lorem.paragraph()
+            if (question.title.includes('Reason')) {
+              answer = [
+                'I need this document for graduate school application',
+                'Required for job application process',
+                'Needed for scholarship application',
+                'Personal academic records',
+                'Transfer to another university',
+              ][Math.floor(Math.random() * 5)]
+            } else {
+              answer = Math.random() > 0.5 ? 'Please process as soon as possible. Thank you.' : ''
+            }
             break
           case 'select':
             if (question.options && question.options.length > 0) {
@@ -600,10 +794,27 @@ async function main() {
             }
             break
           case 'number':
-            answer = (3 + Math.random() * 1).toFixed(2) // For GPA or other numbers
+            if (question.title.includes('GPA')) {
+              answer = (3.0 + Math.random() * 1.0).toFixed(2) // GPA between 3.0-4.0
+            } else {
+              answer = Math.floor(Math.random() * 100).toString()
+            }
+            break
+          case 'date':
+            if (question.title.includes('Start Date')) {
+              answer = addDays(new Date(), Math.floor(Math.random() * 30))
+                .toISOString()
+                .split('T')[0]
+            } else if (question.title.includes('Return Date')) {
+              answer = addDays(new Date(), 30 + Math.floor(Math.random() * 60))
+                .toISOString()
+                .split('T')[0]
+            } else {
+              answer = new Date().toISOString().split('T')[0]
+            }
             break
           default:
-            answer = faker.lorem.words(3)
+            answer = 'N/A'
         }
 
         submissionAnswers.push({
@@ -631,7 +842,15 @@ async function main() {
         handleByOperatorId: status !== FormSubmissionStatus.PENDING ? operator?.id : null,
         handleAt:
           status !== FormSubmissionStatus.PENDING ? randomDate(submissionDate, addDays(submissionDate, 5)) : null,
-        remarks: status !== FormSubmissionStatus.PENDING ? faker.lorem.sentence() : null,
+        remarks:
+          status !== FormSubmissionStatus.PENDING
+            ? [
+                'Form reviewed and approved',
+                'Additional documentation required',
+                'Form completed successfully',
+                'Processing in progress',
+              ][Math.floor(Math.random() * 4)]
+            : null,
       },
     })
 
@@ -649,7 +868,10 @@ async function main() {
           metadata: {
             formName: form.name,
             studentName: student.firstName + ' ' + student.lastName,
+            studentId: student.studentId,
             timestamp: new Date().toISOString(),
+            signatureType: 'Digital Certificate',
+            issuer: 'VirtuUni Academic Office',
           },
           userId: student.userId,
         },
@@ -670,6 +892,58 @@ async function main() {
   const eventCategories = ['Academic', 'Cultural', 'Sports', 'Career', 'Workshop', 'Conference', 'Social']
   const events = []
 
+  const eventNames = {
+    Academic: [
+      'Research Symposium 2025',
+      'Academic Excellence Awards',
+      'Graduate Thesis Defense',
+      'Science Fair Competition',
+      'Mathematical Olympiad',
+    ],
+    Cultural: [
+      'International Culture Festival',
+      'Art Exhibition Opening',
+      'Music Concert Series',
+      'Poetry Reading Night',
+      'Cultural Heritage Week',
+    ],
+    Sports: [
+      'Annual Sports Day',
+      'Basketball Championship',
+      'Swimming Competition',
+      'Tennis Tournament',
+      'Athletic Meet 2025',
+    ],
+    Career: [
+      'Career Fair 2025',
+      'Job Interview Workshop',
+      'Resume Building Session',
+      'Industry Networking Event',
+      'Entrepreneurship Summit',
+    ],
+    Workshop: [
+      'Leadership Development Workshop',
+      'Digital Skills Training',
+      'Research Methods Workshop',
+      'Communication Skills Seminar',
+      'Time Management Workshop',
+    ],
+    Conference: [
+      'Technology Innovation Conference',
+      'Sustainability Summit',
+      'Education Reform Conference',
+      'Healthcare Symposium',
+      'Business Strategy Conference',
+    ],
+    Social: [
+      'Welcome Back Party',
+      'Graduation Celebration',
+      'Student Mixer Event',
+      'Community Service Day',
+      'Alumni Reunion',
+    ],
+  }
+
   for (let i = 0; i < eventsCount; i++) {
     const today = new Date()
     const eventStartDate = addDays(today, -10 + Math.floor(Math.random() * 30)) // From 10 days ago to 20 days ahead
@@ -680,20 +954,20 @@ async function main() {
     const endTime = addHours(startTime, duration)
 
     const category = eventCategories[Math.floor(Math.random() * eventCategories.length)]
+    const possibleNames = eventNames[category]
+    const eventName = possibleNames[Math.floor(Math.random() * possibleNames.length)]
 
     // Get a valid operator from the admins array
     let operator = null
     if (admins.length > 0) {
-      let adminIndex = Math.floor(Math.random() * admins.length)
-      let adminObj = admins[adminIndex]
-      // Make sure adminObj exists and has an operator property
-      while (!adminObj || !adminObj.operator) {
-        if (admins.length === 0) break
-        adminIndex = Math.floor(Math.random() * admins.length)
-        adminObj = admins[adminIndex]
-      }
-      if (adminObj && adminObj.operator) {
-        operator = adminObj.operator
+      // Try to find a valid admin with operator
+      for (let attempt = 0; attempt < admins.length; attempt++) {
+        const adminIndex = Math.floor(Math.random() * admins.length)
+        const adminObj = admins[adminIndex]
+        if (adminObj && adminObj.operator) {
+          operator = adminObj.operator
+          break
+        }
       }
     }
 
@@ -701,8 +975,6 @@ async function main() {
       console.log(`No valid operator found to create event, skipping`)
       continue
     }
-
-    const eventName = `${category} ${faker.company.buzzNoun()} ${faker.company.buzzAdjective()} Event`
 
     // Check if event already exists
     const existingEvent = await prisma.event.findFirst({
@@ -715,25 +987,56 @@ async function main() {
       continue
     }
 
+    // Generate appropriate description based on category
+    let description = ''
+    switch (category) {
+      case 'Academic':
+        description = `Join us for an engaging academic event focusing on ${majors[Math.floor(Math.random() * majors.length)]}. This event will feature presentations, discussions, and networking opportunities for students and faculty.`
+        break
+      case 'Cultural':
+        description = `Experience the rich diversity of our university community through cultural performances, exhibitions, and interactive activities. Open to all students and faculty members.`
+        break
+      case 'Sports':
+        description = `Participate in competitive sports activities and showcase your athletic abilities. This event promotes fitness, teamwork, and school spirit among students.`
+        break
+      case 'Career':
+        description = `Advance your career prospects through professional development opportunities, industry insights, and networking with employers and alumni.`
+        break
+      case 'Workshop':
+        description = `Develop new skills and enhance your knowledge through hands-on learning experiences led by experienced instructors and industry professionals.`
+        break
+      case 'Conference':
+        description = `Engage with leading experts and researchers in various fields through keynote speeches, panel discussions, and collaborative sessions.`
+        break
+      case 'Social':
+        description = `Connect with fellow students and build lasting friendships through fun social activities and community building events.`
+        break
+      default:
+        description = `Join us for this exciting university event designed to engage, educate, and inspire our academic community.`
+    }
+
     const event = await prisma.event.create({
       data: {
         name: eventName,
-        description: faker.lorem.paragraphs(2),
+        description: description,
         startTime,
         endTime,
         location: locations[Math.floor(Math.random() * locations.length)],
         capacity: 30 + Math.floor(Math.random() * 200),
         isPublished: Math.random() > 0.2, // 80% chance event is published
-        imageUrl: faker.image.url({ width: 640, height: 480 }),
+        imageUrl: `https://picsum.photos/800/600?random=${i}`, // Use picsum for consistent images
         category,
         registrationDeadline: addDays(startTime, -1),
         requireApproval: Math.random() > 0.7, // 30% chance approval is required
         createdByOperatorId: operator.id,
         metadata: {
-          organizers: [faker.company.name(), faker.company.name()],
-          contactEmail: faker.internet.email(),
-          contactPhone: `09${faker.string.numeric(8)}`,
-          additionalDetails: faker.lorem.paragraph(),
+          organizers: ['Student Affairs Office', 'Academic Department', 'Student Council'][
+            Math.floor(Math.random() * 3)
+          ],
+          contactEmail: `events@virtuuni.edu.vn`,
+          contactPhone: `+1-555-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+          eventType: category,
+          targetAudience: ['All Students', 'Undergraduate', 'Graduate', 'Faculty'][Math.floor(Math.random() * 4)],
         },
       },
     })
@@ -746,74 +1049,92 @@ async function main() {
   const registrationsCount = 200
   const registrationStatuses = Object.values(EventRegistrationStatus)
 
-  for (let i = 0; i < registrationsCount; i++) {
-    const event = events[Math.floor(Math.random() * events.length)]
+  // Check if we have events and students before creating registrations
+  if (events.length === 0) {
+    console.log('No events created, skipping event registrations')
+  } else if (students.length === 0) {
+    console.log('No students created, skipping event registrations')
+  } else {
+    for (let i = 0; i < registrationsCount; i++) {
+      const event = events[Math.floor(Math.random() * events.length)]
 
-    // Get a student who hasn't registered for this event yet
-    let validStudent = null
-    let attempts = 0
+      // Get a student who hasn't registered for this event yet
+      let validStudent = null
+      let attempts = 0
 
-    while (!validStudent && attempts < 10) {
-      attempts++
-      // Get a valid student from the students array
-      let studentIndex = Math.floor(Math.random() * students.length)
-      let studentObj = students[studentIndex]
-      // Make sure studentObj exists and has a student property
-      while (!studentObj || !studentObj.student) {
-        if (students.length === 0) break
-        studentIndex = Math.floor(Math.random() * students.length)
-        studentObj = students[studentIndex]
+      while (!validStudent && attempts < 10) {
+        attempts++
+
+        // Get a random student from the students array
+        const studentIndex = Math.floor(Math.random() * students.length)
+        const studentObj = students[studentIndex]
+
+        // Make sure we have a valid student object with student property
+        if (!studentObj || !studentObj.student) {
+          continue
+        }
+
+        const candidateStudent = studentObj.student
+
+        // Check if student already registered for this event
+        const existingRegistration = await prisma.eventRegistration.findUnique({
+          where: {
+            eventId_studentId: {
+              eventId: event.id,
+              studentId: candidateStudent.id,
+            },
+          },
+        })
+
+        if (!existingRegistration) {
+          validStudent = candidateStudent
+          break
+        }
       }
 
-      if (!studentObj || !studentObj.student) {
-        console.log('Failed to find a valid student for event registration, skipping')
+      // If we couldn't find a valid student after 10 attempts, skip this registration
+      if (!validStudent) {
+        console.log(`Could not find available student for event ${event.name} after ${attempts} attempts, skipping`)
         continue
       }
 
-      const candidateStudent = studentObj.student
+      const status = registrationStatuses[Math.floor(Math.random() * registrationStatuses.length)]
+      const operator = Math.random() > 0.3 ? admins[Math.floor(Math.random() * admins.length)].operator : null
 
-      // Check if student already registered for this event
-      const existingRegistration = await prisma.eventRegistration.findUnique({
-        where: {
-          eventId_studentId: {
-            eventId: event.id,
-            studentId: candidateStudent.id,
+      await prisma.eventRegistration.create({
+        data: {
+          eventId: event.id,
+          studentId: validStudent.id,
+          status,
+          handleByOperatorId: status !== EventRegistrationStatus.PENDING ? operator?.id : null,
+          handleAt:
+            status !== EventRegistrationStatus.PENDING ? randomDate(addDays(new Date(), -10), new Date()) : null,
+          remarks:
+            status !== EventRegistrationStatus.PENDING
+              ? [
+                  'Registration approved',
+                  'Waitlisted due to capacity',
+                  'Please bring student ID',
+                  'Confirmed attendance',
+                ][Math.floor(Math.random() * 4)]
+              : null,
+          additionalInfo: {
+            dietaryRestrictions:
+              Math.random() > 0.8
+                ? ['Vegetarian', 'Vegan', 'Gluten-free', 'No nuts'][Math.floor(Math.random() * 4)]
+                : null,
+            specialNeeds: Math.random() > 0.9 ? 'Wheelchair accessible seating needed' : null,
+            emergencyContact:
+              Math.random() > 0.7
+                ? {
+                    name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
+                    phone: faker.phone.number(),
+                  }
+                : null,
           },
         },
       })
-
-      if (!existingRegistration) {
-        validStudent = candidateStudent
-      }
     }
-
-    // If all students are taken, skip this registration
-    if (!validStudent) continue
-
-    const status = registrationStatuses[Math.floor(Math.random() * registrationStatuses.length)]
-    const operator = Math.random() > 0.3 ? admins[Math.floor(Math.random() * admins.length)].operator : null
-
-    await prisma.eventRegistration.create({
-      data: {
-        eventId: event.id,
-        studentId: validStudent.id,
-        status,
-        handleByOperatorId: status !== EventRegistrationStatus.PENDING ? operator?.id : null,
-        handleAt: status !== EventRegistrationStatus.PENDING ? randomDate(addDays(new Date(), -10), new Date()) : null,
-        remarks: status !== EventRegistrationStatus.PENDING ? faker.lorem.sentence() : null,
-        additionalInfo: {
-          dietaryRestrictions: Math.random() > 0.8 ? faker.lorem.words(2) : null,
-          specialNeeds: Math.random() > 0.9 ? faker.lorem.sentence() : null,
-          emergencyContact:
-            Math.random() > 0.7
-              ? {
-                  name: faker.person.fullName(),
-                  phone: `09${faker.string.numeric(8)}`,
-                }
-              : null,
-        },
-      },
-    })
   }
 
   // Create Blockchain Transactions (50 transactions)
@@ -862,6 +1183,9 @@ async function main() {
           timestamp: new Date().toISOString(),
           blockNumber: faker.number.int({ min: 10000000, max: 15000000 }),
           gasUsed: faker.number.int({ min: 21000, max: 500000 }).toString(),
+          transactionType: transactionType,
+          networkFee: (Math.random() * 0.01).toFixed(6) + ' SOL',
+          confirmations: faker.number.int({ min: 1, max: 50 }),
         },
         userId: user.id,
       },
@@ -978,16 +1302,18 @@ async function createNotificationsData() {
         if (forms.length > 0) {
           const form = forms[Math.floor(Math.random() * forms.length)]
           title = `Academic Update: ${form.name}`
-          content = `Important information regarding ${form.name}: ${faker.lorem.paragraph()}`
+          content = `Important information regarding ${form.name}. Please review the updated requirements and submit your application before the deadline. For assistance, contact the Academic Affairs Office.`
           metadata = {
             formId: form.id,
             formName: form.name,
             formType: form.type,
             deadline: addDays(new Date(), Math.floor(Math.random() * 14) + 1).toISOString(),
+            department: 'Academic Affairs',
+            priority: 'High',
           }
         } else {
-          title = 'Academic Update'
-          content = `Important academic information: ${faker.lorem.paragraph()}`
+          title = 'Academic Semester Update'
+          content = `Important academic information for the current semester. Please check your course schedules and upcoming assignment deadlines. Contact your academic advisor if you have any questions.`
         }
         break
 
@@ -995,46 +1321,73 @@ async function createNotificationsData() {
         if (events.length > 0) {
           const event = events[Math.floor(Math.random() * events.length)]
           title = `Event Reminder: ${event.name}`
-          content = `Don't miss the upcoming event "${event.name}". ${faker.lorem.paragraph()}`
+          content = `Don't miss the upcoming event "${event.name}". Registration is now open and spaces are limited. This event offers great opportunities for learning and networking with fellow students and faculty.`
           metadata = {
             eventId: event.id,
             eventName: event.name,
             eventTime: event.startTime,
             location: event.location,
+            category: event.category,
+            registrationRequired: true,
           }
         } else {
-          title = 'Event Update'
-          content = `New campus event announced: ${faker.lorem.paragraph()}`
+          title = 'Campus Event Announcement'
+          content = `New campus event announced! Join us for an exciting opportunity to engage with the university community. More details will be available soon on the student portal.`
         }
         break
 
       case NotificationType.SYSTEM:
-        title = 'System Notification'
-        content = `System update information: ${faker.lorem.paragraph()}`
+        title = 'System Maintenance Notice'
+        content = `Scheduled system maintenance will be performed on the student portal. During this time, some services may be temporarily unavailable. We apologize for any inconvenience and appreciate your patience.`
         metadata = {
-          systemName: faker.company.buzzNoun(),
+          systemName: ['Student Portal', 'Library System', 'Course Management', 'Email System'][
+            Math.floor(Math.random() * 4)
+          ],
           updateTime: new Date().toISOString(),
+          expectedDuration: ['2 hours', '4 hours', '30 minutes', '1 hour'][Math.floor(Math.random() * 4)],
           importance: Math.random() > 0.5 ? 'high' : 'normal',
         }
         break
 
       case NotificationType.URGENT:
-        title = `URGENT: ${faker.lorem.sentence(3)}`
-        content = `Urgent notification regarding ${faker.lorem.words(3)}: ${faker.lorem.paragraph()}`
+        const urgentTopics = [
+          'Emergency Campus Closure',
+          'Important Security Update',
+          'Immediate Action Required',
+          'Critical System Alert',
+          'Weather Emergency Notice',
+        ]
+        const urgentTopic = urgentTopics[Math.floor(Math.random() * urgentTopics.length)]
+        title = `URGENT: ${urgentTopic}`
+        content = `This is an urgent notification regarding ${urgentTopic.toLowerCase()}. Please read this message carefully and take appropriate action as needed. Contact campus security or administration for immediate assistance.`
         metadata = {
-          urgencyLevel: 'high',
+          urgencyLevel: 'critical',
           requiresAction: true,
           deadline: addDays(new Date(), 1).toISOString(),
+          contactInfo: 'Campus Security: 555-HELP (4357)',
+          alertType: urgentTopic,
         }
         break
 
       case NotificationType.GENERAL:
       default:
-        title = `University Update: ${faker.lorem.words(3)}`
-        content = faker.lorem.paragraph()
+        const generalTopics = [
+          'Library Hours Update',
+          'Campus Facility News',
+          'Student Services Information',
+          'University Policy Update',
+          'Community Announcement',
+        ]
+        const generalTopic = generalTopics[Math.floor(Math.random() * generalTopics.length)]
+        title = `University Update: ${generalTopic}`
+        content = `We want to inform you about important updates regarding ${generalTopic.toLowerCase()}. Please review this information and contact the appropriate department if you have any questions or concerns.`
         metadata = {
-          category: faker.commerce.department(),
+          category: generalTopic,
           publishedBy: 'University Administration',
+          department: ['Student Services', 'Library', 'Campus Operations', 'Academic Affairs'][
+            Math.floor(Math.random() * 4)
+          ],
+          effectiveDate: new Date().toISOString(),
         }
         break
     }
@@ -1179,69 +1532,76 @@ async function createFeedbackData() {
   // Sample feedback content templates for different categories
   const feedbackTemplates = {
     [FeedbackCategory.GENERAL]: [
-      'Overall experience with the system has been {sentiment}.',
-      'The platform is {sentiment} for daily use.',
-      'General feedback about the university services.',
+      'Overall experience with the university system has been {sentiment}.',
+      'The campus facilities and services are {sentiment} for student needs.',
+      'General feedback about the university academic environment and support services.',
     ],
     [FeedbackCategory.USER_EXPERIENCE]: [
-      'The user interface is {sentiment} to navigate.',
-      'Found the system {sentiment} to use.',
-      'User experience could be {sentiment}.',
+      'The student portal interface is {sentiment} to navigate and use effectively.',
+      'Found the online registration system {sentiment} and user-friendly.',
+      'The mobile app user experience could be improved to be more {sentiment}.',
     ],
     [FeedbackCategory.FUNCTIONALITY]: [
-      'The booking feature works {sentiment}.',
-      'Form submission functionality is {sentiment}.',
-      'Event registration process is {sentiment}.',
+      'The room booking feature works {sentiment} and meets student needs.',
+      'Form submission functionality is {sentiment} and processes requests efficiently.',
+      'Event registration process is {sentiment} and handles large volumes well.',
     ],
     [FeedbackCategory.PERFORMANCE]: [
-      'The system loads {sentiment}.',
-      'Response time is {sentiment}.',
-      'Performance could be {sentiment}.',
+      'The student portal loads {sentiment} during peak usage times.',
+      'System response time is {sentiment} when accessing course materials.',
+      'Overall system performance could be {sentiment} during registration periods.',
     ],
     [FeedbackCategory.DESIGN]: [
-      'The design looks {sentiment}.',
-      'Visual appeal is {sentiment}.',
-      'Layout is {sentiment}.',
+      'The website design looks {sentiment} and professional.',
+      'Visual appeal of the student interface is {sentiment} and modern.',
+      'The mobile app layout is {sentiment} and follows good design principles.',
     ],
     [FeedbackCategory.CONTENT]: [
-      'The information provided is {sentiment}.',
-      'Content quality is {sentiment}.',
-      'Documentation is {sentiment}.',
+      'The course information provided is {sentiment} and comprehensive.',
+      'Academic content quality is {sentiment} and up-to-date.',
+      'Documentation and help resources are {sentiment} and easy to understand.',
     ],
     [FeedbackCategory.TECHNICAL_ISSUE]: [
-      'Experienced technical issues: {issue}.',
-      'Bug found in {feature}.',
-      'System error occurred when {action}.',
+      'Experienced technical issues with login authentication system.',
+      'Bug found in the grade submission portal affecting multiple courses.',
+      'System error occurred when accessing the library database.',
     ],
     [FeedbackCategory.SUGGESTION]: [
-      'Suggestion: {suggestion}.',
-      'Would be great if {improvement}.',
-      'Consider adding {feature}.',
+      'Suggestion: Add a dark mode option to the student portal.',
+      'Would be great if the system had better notification management.',
+      'Consider adding a mobile-first design for better accessibility.',
     ],
     [FeedbackCategory.COMPLAINT]: [
-      'Complaint about {issue}.',
-      'Dissatisfied with {service}.',
-      'Problem with {feature}.',
+      'Complaint about slow response times during peak hours.',
+      'Dissatisfied with the limited functionality of the mobile app.',
+      'Problem with the course evaluation system not saving responses.',
     ],
     [FeedbackCategory.COMPLIMENT]: [
-      'Great work on {feature}!',
-      'Excellent service provided.',
-      'Very satisfied with {aspect}.',
+      'Great work on the new dashboard design and functionality!',
+      'Excellent improvements to the online library system.',
+      'Very satisfied with the responsive customer support team.',
     ],
   }
 
   // Keywords for different categories
   const categoryKeywords = {
-    [FeedbackCategory.GENERAL]: ['system', 'experience', 'overall', 'service'],
-    [FeedbackCategory.USER_EXPERIENCE]: ['interface', 'navigation', 'usability', 'user-friendly'],
-    [FeedbackCategory.FUNCTIONALITY]: ['feature', 'function', 'work', 'process'],
-    [FeedbackCategory.PERFORMANCE]: ['speed', 'loading', 'response', 'performance'],
-    [FeedbackCategory.DESIGN]: ['design', 'layout', 'visual', 'appearance'],
-    [FeedbackCategory.CONTENT]: ['information', 'content', 'documentation', 'details'],
-    [FeedbackCategory.TECHNICAL_ISSUE]: ['error', 'bug', 'issue', 'problem'],
-    [FeedbackCategory.SUGGESTION]: ['suggestion', 'improvement', 'enhancement', 'feature'],
-    [FeedbackCategory.COMPLAINT]: ['complaint', 'problem', 'issue', 'dissatisfied'],
-    [FeedbackCategory.COMPLIMENT]: ['great', 'excellent', 'satisfied', 'good'],
+    [FeedbackCategory.GENERAL]: ['university', 'campus', 'overall', 'services', 'academic', 'student life'],
+    [FeedbackCategory.USER_EXPERIENCE]: [
+      'interface',
+      'navigation',
+      'usability',
+      'user-friendly',
+      'intuitive',
+      'accessibility',
+    ],
+    [FeedbackCategory.FUNCTIONALITY]: ['features', 'booking', 'registration', 'submission', 'workflow', 'process'],
+    [FeedbackCategory.PERFORMANCE]: ['speed', 'loading', 'response time', 'efficiency', 'lag', 'performance'],
+    [FeedbackCategory.DESIGN]: ['design', 'layout', 'visual', 'appearance', 'interface', 'graphics'],
+    [FeedbackCategory.CONTENT]: ['information', 'content', 'documentation', 'details', 'accuracy', 'completeness'],
+    [FeedbackCategory.TECHNICAL_ISSUE]: ['error', 'bug', 'issue', 'problem', 'crash', 'malfunction'],
+    [FeedbackCategory.SUGGESTION]: ['suggestion', 'improvement', 'enhancement', 'feature request', 'recommendation'],
+    [FeedbackCategory.COMPLAINT]: ['complaint', 'problem', 'issue', 'dissatisfied', 'frustration', 'difficulty'],
+    [FeedbackCategory.COMPLIMENT]: ['excellent', 'great', 'satisfied', 'positive', 'helpful', 'impressive'],
   }
 
   for (let i = 0; i < feedbackCount; i++) {
@@ -1277,21 +1637,46 @@ async function createFeedbackData() {
       content = template.replace('{sentiment}', sentimentWord)
     }
 
-    // Replace other placeholders
+    // Replace other placeholders with meaningful content
     content = content
-      .replace('{issue}', faker.lorem.words(3))
-      .replace('{feature}', faker.lorem.words(2))
-      .replace('{action}', faker.lorem.words(3))
-      .replace('{suggestion}', faker.lorem.sentence())
-      .replace('{improvement}', faker.lorem.words(4))
-      .replace('{service}', faker.lorem.words(2))
-      .replace('{aspect}', faker.lorem.words(2))
+      .replace('{issue}', 'course registration system')
+      .replace('{feature}', 'student portal')
+      .replace('{action}', 'submitting assignments')
+      .replace('{suggestion}', 'implementing a better search function')
+      .replace('{improvement}', 'the system had better mobile responsiveness')
+      .replace('{service}', 'technical support response time')
+      .replace('{aspect}', 'online learning platform')
 
-    // Add more detailed content
-    content += ' ' + faker.lorem.paragraph()
+    // Add more detailed content based on category
+    if (category === FeedbackCategory.TECHNICAL_ISSUE) {
+      content +=
+        ' This issue has been affecting my ability to complete coursework efficiently. Please investigate and resolve as soon as possible.'
+    } else if (category === FeedbackCategory.SUGGESTION) {
+      content +=
+        ' This enhancement would significantly improve the user experience for students and help streamline academic processes.'
+    } else if (category === FeedbackCategory.COMPLIMENT) {
+      content +=
+        ' The recent updates have made a noticeable difference in daily usage and overall satisfaction with the platform.'
+    } else {
+      content +=
+        ' I believe addressing this feedback will help improve the overall quality of services provided to students.'
+    }
 
-    // Generate title
-    const title = `${category.replace('_', ' ')} Feedback - ${faker.lorem.words(3)}`
+    // Generate title based on category and content
+    const titlePrefixes = {
+      [FeedbackCategory.GENERAL]: 'General Feedback',
+      [FeedbackCategory.USER_EXPERIENCE]: 'User Experience Review',
+      [FeedbackCategory.FUNCTIONALITY]: 'Feature Functionality',
+      [FeedbackCategory.PERFORMANCE]: 'Performance Issue',
+      [FeedbackCategory.DESIGN]: 'Design Feedback',
+      [FeedbackCategory.CONTENT]: 'Content Quality',
+      [FeedbackCategory.TECHNICAL_ISSUE]: 'Technical Issue Report',
+      [FeedbackCategory.SUGGESTION]: 'Feature Suggestion',
+      [FeedbackCategory.COMPLAINT]: 'Service Complaint',
+      [FeedbackCategory.COMPLIMENT]: 'Positive Feedback',
+    }
+
+    const title = `${titlePrefixes[category]} - ${['Student Portal', 'Mobile App', 'Course System', 'Registration', 'Library System'][Math.floor(Math.random() * 5)]}`
 
     // Generate rating (1-5) based on sentiment
     let rating = null
@@ -1324,8 +1709,17 @@ async function createFeedbackData() {
         sentiment: sentiment,
         confidence: confidence,
         keywords: keywords,
-        summary: faker.lorem.sentence(),
-        suggestions: Math.random() > 0.5 ? [faker.lorem.sentence()] : [],
+        summary: `Feedback categorized as ${category.toLowerCase()} with ${sentiment.toLowerCase()} sentiment. Main concerns relate to ${keywords[0]} and ${keywords[1] || 'system usability'}.`,
+        suggestions:
+          Math.random() > 0.5
+            ? [
+                'Consider reviewing the reported issues and implementing improvements',
+                'Follow up with the student to gather more specific details',
+                'Monitor similar feedback patterns for system-wide improvements',
+              ][Math.floor(Math.random() * 3)]
+              ? ['Consider reviewing the reported issues and implementing improvements']
+              : []
+            : [],
       },
       timestamp: new Date().toISOString(),
     }
@@ -1356,13 +1750,17 @@ async function createFeedbackData() {
       reviewedAt = randomDate(addDays(new Date(), -30), new Date())
     }
 
-    // Create metadata
+    // Create metadata with realistic information
     const metadata = {
       source: Math.random() > 0.5 ? 'web' : 'mobile',
-      browser: Math.random() > 0.5 ? 'Chrome' : 'Safari',
-      userAgent: faker.internet.userAgent(),
-      ipAddress: faker.internet.ip(),
-      tags: [category.toLowerCase(), sentiment.toLowerCase()],
+      browser: ['Chrome', 'Safari', 'Firefox', 'Edge'][Math.floor(Math.random() * 4)],
+      userAgent: 'Mozilla/5.0 (compatible; Student Portal)',
+      ipAddress: `10.0.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+      tags: [category.toLowerCase().replace('_', '-'), sentiment.toLowerCase()],
+      submissionMethod: Math.random() > 0.7 ? 'anonymous' : 'authenticated',
+      relatedSystem: ['Student Portal', 'Mobile App', 'Course Management', 'Library System'][
+        Math.floor(Math.random() * 4)
+      ],
     }
 
     try {
@@ -1391,7 +1789,27 @@ async function createFeedbackData() {
 
         for (let j = 0; j < responseCount; j++) {
           const isInternal = Math.random() > 0.7 // 30% chance internal note
-          const responseContent = isInternal ? faker.lorem.sentence() + ' [INTERNAL NOTE]' : faker.lorem.paragraph()
+
+          let responseContent = ''
+          if (isInternal) {
+            const internalNotes = [
+              'Escalate to IT department for technical review',
+              'Similar issue reported by 3 other students this week',
+              'Requires coordination with academic affairs office',
+              'Follow up required within 48 hours',
+              'Add to next system update priority list',
+            ]
+            responseContent = internalNotes[Math.floor(Math.random() * internalNotes.length)] + ' [INTERNAL NOTE]'
+          } else {
+            const publicResponses = [
+              'Thank you for your feedback. We are reviewing your concerns and will follow up with you soon.',
+              'We appreciate you taking the time to provide this feedback. Your issue has been forwarded to the appropriate department.',
+              'Your feedback is important to us. We are working on improvements to address the issues you mentioned.',
+              'Thank you for reporting this issue. We will investigate and provide an update within 2-3 business days.',
+              'We value your input and are committed to improving our services based on student feedback like yours.',
+            ]
+            responseContent = publicResponses[Math.floor(Math.random() * publicResponses.length)]
+          }
 
           await prisma.feedbackResponse.create({
             data: {

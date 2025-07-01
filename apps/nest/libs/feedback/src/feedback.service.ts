@@ -8,6 +8,7 @@ import { th } from '@app/helper/transform.helper'
 import { FeedbackEntity } from './entities/feedback.entity'
 import { DateTime } from 'luxon'
 import { AiService } from 'libs/ai/src'
+import { UserEntity } from '@app/user/entities/user.entity'
 
 @Injectable()
 export class FeedbackService {
@@ -15,6 +16,42 @@ export class FeedbackService {
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
   ) {}
+
+  async getMyFeedbacks(user: UserEntity, queryFeedbackDto: QueryFeedbackDto) {
+    const { select, include } = queryFeedbackDto
+    const feedbacks = await this.prisma.feedback.findMany({
+      where: {
+        ...queryFeedbackDto.where,
+        studentId: user.student.id,
+      },
+      orderBy: queryFeedbackDto.sort,
+      take: queryFeedbackDto.take,
+      skip: queryFeedbackDto.skip,
+      ...(select
+        ? { select: Object.fromEntries(select.map((key) => [key, true])) }
+        : include
+          ? { include: Object.fromEntries(include.map((key) => [key, true])) }
+          : {}),
+    })
+
+    const total = await this.prisma.feedback.count({
+      where: {
+        ...queryFeedbackDto.where,
+        studentId: user.student.id,
+      },
+    })
+
+    const totalPages = Math.ceil(total / queryFeedbackDto.take)
+    const totalItems = total
+    const currentPage = Math.floor((queryFeedbackDto.skip || 0) / (queryFeedbackDto.take || 1)) + 1
+
+    return {
+      data: th.toInstancesSafe(FeedbackEntity, feedbacks),
+      totalItems,
+      totalPages,
+      currentPage,
+    }
+  }
 
   async getFeedbacks(queryFeedbackDto: QueryFeedbackDto) {
     const { select, include } = queryFeedbackDto
